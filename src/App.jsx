@@ -8,9 +8,9 @@ function App() {
   const [showPrompt, setShowPrompt] = useState(false);
   const [breakType, setBreakType] = useState('lunch');
   const [mood, setMood] = useState('');
+  const [error, setError] = useState(''); 
 
   useEffect(() => {
-
     if (!isRunning) {
       if (timeLeft === 0) {
         setShowPrompt(true);
@@ -39,8 +39,15 @@ function App() {
     setShowPrompt(false); 
   };
 
-const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(''); 
+
+    // Data validation check: make sure the mood field is not empty
+    if (!mood) {
+        setError('Please enter how you are feeling before continuing.');
+        return; // Stop the function here if validation fails
+    }
     
     const data = {
         breakType,
@@ -59,24 +66,24 @@ const handleSubmit = async (e) => {
 
         if (response.ok) {
             console.log('Break logged successfully on the backend!');
-            
             resetTimer();
         } else {
             console.error('Failed to log break on the backend.');
+            setError('Failed to log break. Please try again.');
         }
 
     } catch (error) {
         console.error('Error connecting to the backend:', error);
+        setError('Error: Cannot connect to the server.');
     }
 };
 
   // Format the time into MM:SS format
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
-
   const progressPercentage = (timeLeft / 1500) * 100;
 
-  
+  // Render the break prompt screen if showPrompt is true
   if (showPrompt) {
     return (
       <div className="App">
@@ -107,6 +114,7 @@ const handleSubmit = async (e) => {
                 placeholder="I'm feeling... tired, energized, stressed, etc."
               />
             </div>
+            {error && <p className="error-message">{error}</p>}
             <button type="submit">Log Break</button>
           </form>
         </div>
@@ -114,7 +122,7 @@ const handleSubmit = async (e) => {
     );
   }
 
-  // Timer view
+  // Main timer screen
   return (
     <div className="App">
       <h1>PauseQuest Timer</h1>
