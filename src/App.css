@@ -96,3 +96,15 @@ textarea {
   background-color: #66fcf1;
   transition: width 1s linear; /* Smooth animation */
 }
+
+.error-message {
+    color: #ff5252;
+    margin-top: 10px;
+}
+.success-message {
+    color: #4caf50;
+    margin-top: 10px;
+}
+.hidden {
+    display: none;
+}
