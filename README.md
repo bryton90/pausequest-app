@@ -1,12 +1,76 @@
-# React + Vite
+# PauseQuest
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+PauseQuest is a productivity app designed to help you manage your work sessions and take meaningful breaks. With a built-in timer, break prompts, and mood tracking, PauseQuest ensures you stay productive while maintaining your well-being.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Features
 
-## Expanding the ESLint configuration
+- **Pomodoro Timer**: A 25-minute timer to help you focus on tasks.
+- **Break Prompts**: Encourages you to take breaks and log your activities.
+- **Mood Tracking**: Reflect on how you feel after each break.
+- **Customizable Break Types**: Choose from lunch, snack, water, or stretch breaks.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+
+## Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/bryton90/pausequest-app.git
+   ```
+
+2. Navigate to the project directory:
+   ```bash
+   cd pausequest-app
+   ```
+
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+4. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+---
+
+## Usage
+
+1. Open the app in your browser (usually at `http://localhost:5173`).
+2. Start the timer and focus on your task.
+3. When the timer ends, log your break activity and mood.
+4. Reset the timer to start a new session.
+
+---
+
+## Screenshots
+
+![PauseQuest Timer](public/vite.svg)
+*Example of the timer interface.*
+
+---
+
+## Contributing
+
+We welcome contributions! To contribute:
+
+1. Fork the repository.
+2. Create a new branch for your feature or bug fix.
+3. Commit your changes and push the branch.
+4. Open a pull request.
+
+---
+
+## License
+
+This project is licensed under the MIT License. See the `LICENSE` file for details.
+
+---
+
+## Acknowledgments
+
+- Built with [React](https://reactjs.org/) and [Vite](https://vitejs.dev/).
+- Icons from [FontAwesome](https://fontawesome.com/).
