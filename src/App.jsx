@@ -2,34 +2,29 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 
 function App() {
-  // State variables
+  
   const [timeLeft, setTimeLeft] = useState(1500); // 1500 seconds = 25 minutes
   const [isRunning, setIsRunning] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
   const [breakType, setBreakType] = useState('lunch');
   const [mood, setMood] = useState('');
 
-  // useEffect Hook for the timer logic
   useEffect(() => {
-    // Exit if the timer is not running or has reached zero
+
     if (!isRunning) {
-      // If time is up, show the break prompt
       if (timeLeft === 0) {
         setShowPrompt(true);
       }
       return;
     }
 
-    // Set up an interval to decrement the timer every second
     const intervalId = setInterval(() => {
       setTimeLeft((prevTime) => prevTime - 1);
     }, 1000);
 
-    // Clean up the interval when the component unmounts or dependencies change
     return () => clearInterval(intervalId);
   }, [isRunning, timeLeft]);
 
-  // Timer control functions
   const startTimer = () => {
     setIsRunning(true);
   };
@@ -40,31 +35,48 @@ function App() {
 
   const resetTimer = () => {
     setIsRunning(false);
-    setTimeLeft(1500); // Reset to 25 minutes
-    setShowPrompt(false); // Hide the prompt
+    setTimeLeft(1500); 
+    setShowPrompt(false); 
   };
 
-  // Form submission handler
-  const handleSubmit = (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Break Logged!');
-    console.log('Break Type:', breakType);
-    console.log('Mood:', mood);
     
-    // Reset form fields and timer
-    setBreakType('lunch');
-    setMood('');
-    resetTimer();
-  };
+    const data = {
+        breakType,
+        mood,
+    };
+
+    try {
+        // Send a POST request to our Flask backend
+        const response = await fetch('http://127.0.0.1:5000/log-break', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        });
+
+        if (response.ok) {
+            console.log('Break logged successfully on the backend!');
+            
+            resetTimer();
+        } else {
+            console.error('Failed to log break on the backend.');
+        }
+
+    } catch (error) {
+        console.error('Error connecting to the backend:', error);
+    }
+};
 
   // Format the time into MM:SS format
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
 
-  // Calculate the progress percentage for the bar
   const progressPercentage = (timeLeft / 1500) * 100;
 
-  // Conditional Rendering based on `showPrompt` state
+  
   if (showPrompt) {
     return (
       <div className="App">
