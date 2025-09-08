@@ -1,19 +1,23 @@
-import * as React from 'react';
-import  { useState, useEffect } from 'react';
-import type { JSX } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 
-const App =(): JSX.Element => {
-  
+interface BreakLogData {
+  breakType: string;
+  mood: string;
+}
+
+function App() {
   const [timeLeft, setTimeLeft] = useState<number>(1500); // 1500 seconds = 25 minutes
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [showPrompt, setShowPrompt] = useState<boolean>(false);
   const [breakType, setBreakType] = useState<string>('lunch');
   const [mood, setMood] = useState<string>('');
-  const [error, setError] = useState<string>(''); 
+  const [error, setError] = useState<string>('');
+  const [sentiment, setSentiment] = useState<number | null>(null);
+  const [sentimentMessage, setSentimentMessage] = useState<string>('');
 
   useEffect(() => {
-    if (!isRunning) {
+    if (!isRunning || timeLeft === 0) {
       if (timeLeft === 0) {
         setShowPrompt(true);
       }
@@ -37,54 +41,65 @@ const App =(): JSX.Element => {
 
   const resetTimer = () => {
     setIsRunning(false);
-    setTimeLeft(1500); 
-    setShowPrompt(false); 
+    setTimeLeft(1500);
+    setShowPrompt(false);
+    setSentiment(null); // Reset sentiment state
+    setMood(''); // Reset mood state
+    setBreakType('lunch'); // Reset break type
   };
 
-  interface BreakLogData {
-    breakType: string;
-    mood: string;
-  }
+  const getSentimentMessage = (score: number): string => {
+    if (score >= 0.05) {
+      return "You're feeling pretty positive! Keep up the good work.";
+    } else if (score <= -0.05) {
+      return "You seem a little negative. Remember to take a mindful break.";
+    } else {
+      return "You're feeling quite neutral. A little refresh might help!";
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
-    setError(''); 
+    setError('');
 
     if (!mood) {
-        setError('Please enter how you are feeling before continuing.');
-        return; 
+      setError('Please enter how you are feeling before continuing.');
+      return;
     }
-    
+
     const data: BreakLogData = {
-        breakType,
-        mood,
+      breakType,
+      mood,
     };
 
     try {
-        // Send a POST request to our Flask backend
-        const response: Response = await fetch('http://127.0.0.1:5000/log-break', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-        });
+      const response: Response = await fetch('http://127.0.0.1:5000/log-break', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
 
-        if (response.ok) {
-            console.log('Break logged successfully on the backend!');
-            resetTimer();
-        } else {
-            console.error('Failed to log break on the backend.');
-            setError('Failed to log break. Please try again.');
-        }
+      if (response.ok) {
+        const responseData = await response.json();
+        const sentimentScore: number = responseData.sentiment_score;
 
-    } catch (error: unknown) {
-        console.error('Error connecting to the backend:', error);
-        setError('Error: Cannot connect to the server.');
+        setSentiment(sentimentScore);
+        setSentimentMessage(getSentimentMessage(sentimentScore));
+        
+        console.log('Backend sentiment analysis score:', sentimentScore);
+
+      } else {
+        console.error('Failed to log break on the backend.');
+        setError('Failed to log break. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error connecting to the backend:', error);
+      setError('Error: Cannot connect to the server.');
     }
   };
 
-  // Format the time into MM:SS format
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
   const progressPercentage = (timeLeft / 1500) * 100;
@@ -94,40 +109,49 @@ const App =(): JSX.Element => {
       <div className="App">
         <h1>PauseQuest Break Time!</h1>
         <div className="prompt-container">
-          <h2>It's time for a break.</h2>
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label htmlFor="breakType">What kind of break was it?</label>
-              <select
-                id="breakType"
-                value={breakType}
-                onChange={(e) => setBreakType(e.target.value)}
-              >
-                <option value="lunch">Lunch 🍽️</option>
-                <option value="snack">Snack 🍎</option>
-                <option value="water">Water 💧</option>
-                <option value="stretch">Stretch 🤸‍♂️</option>
-              </select>
+          {sentiment === null ? (
+            <>
+              <h2>It's time for a break.</h2>
+              <form onSubmit={handleSubmit}>
+                <div className="form-group">
+                  <label htmlFor="breakType">What kind of break was it?</label>
+                  <select
+                    id="breakType"
+                    value={breakType}
+                    onChange={(e) => setBreakType(e.target.value)}
+                  >
+                    <option value="lunch">Lunch 🍽️</option>
+                    <option value="snack">Snack 🍎</option>
+                    <option value="water">Water 💧</option>
+                    <option value="stretch">Stretch 🤸‍♂️</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="mood">How are you feeling?</label>
+                  <textarea
+                    id="mood"
+                    rows={4}
+                    value={mood}
+                    onChange={(e) => setMood(e.target.value)}
+                    placeholder="I'm feeling... tired, energized, stressed, etc."
+                  />
+                </div>
+                {error && <p className="error-message">{error}</p>}
+                <button type="submit">Log Break</button>
+              </form>
+            </>
+          ) : (
+            <div className="sentiment-results">
+              <h2>Your break analysis:</h2>
+              <p className="sentiment-message">{sentimentMessage}</p>
+              <button onClick={resetTimer}>Done</button>
             </div>
-            <div className="form-group">
-              <label htmlFor="mood">How are you feeling?</label>
-              <textarea
-                id="mood"
-                rows={4}
-                value={mood}
-                onChange={(e) => setMood(e.target.value)}
-                placeholder="I'm feeling... tired, energized, stressed, etc."
-              />
-            </div>
-            {error && <p className="error-message">{error}</p>}
-            <button type="submit">Log Break</button>
-          </form>
+          )}
         </div>
       </div>
     );
   }
 
-  // Main timer screen
   return (
     <div className="App">
       <h1>PauseQuest Timer</h1>
