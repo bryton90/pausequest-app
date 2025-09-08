@@ -1,45 +1,43 @@
 from flask import Flask, jsonify, request
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer # Import VADER
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 app = Flask(__name__)
-analyzer = SentimentIntensityAnalyzer() # Initialize the analyzer
+
+# Initialize VADER sentiment analyzer
+analyzer = SentimentIntensityAnalyzer()
 
 @app.route('/')
 def home():
     return jsonify({"message": "Welcome to the PauseQuest Backend!"})
 
-# API endpoint to log break data and perform sentiment analysis
+# New API endpoint to log break data and perform sentiment analysis
 @app.route('/log-break', methods=['POST'])
 def log_break():
     if request.method == 'POST':
         data = request.json
+
+        # Check if the required data fields exist
+        if not data or 'breakType' not in data or 'mood' not in data:
+            return jsonify({"error": "Invalid request body"}), 400
+
         break_type = data.get('breakType')
         mood = data.get('mood')
 
-        if not mood: # Basic server-side validation
-            return jsonify({"error": "Mood cannot be empty"}), 400
+        # Perform sentiment analysis on the mood
+        vs = analyzer.polarity_scores(mood)
+        sentiment_score = vs['compound']
 
-        # Perform sentiment analysis
-        sentiment_scores = analyzer.polarity_scores(mood)
+        # Print the data to the console for now
+        print(f"Received break log: Type='{break_type}', Mood='{mood}', Sentiment Score='{sentiment_score}'")
 
-        # The 'compound' score is a normalized, weighted composite score
-        # It ranges from -1 (most negative) to +1 (most positive)
-        sentiment = sentiment_scores['compound']
-
-        # Here, we would save this data (including sentiment) to our database
-        print(f"Received break log: Type='{break_type}', Mood='{mood}', Sentiment='{sentiment}'")
-
-        # You could also send the sentiment score back to the frontend if needed
+        # Return the sentiment score to the frontend
         return jsonify({
             "message": "Break logged successfully!",
-            "sentiment": sentiment, # Optionally send sentiment back
-            "scores": sentiment_scores # Optionally send all scores back
-            }), 200
+            "sentiment_score": sentiment_score
+        }), 200
 
-    # Handle other request methods if necessary, though POST is expected here
+    # Return a "Method Not Allowed" error if not a POST request
     return jsonify({"message": "Method not allowed"}), 405
 
 if __name__ == '__main__':
-    # Ensure Flask runs on 0.0.0.0 to be accessible from frontend if they are on different machines
-    # For local development on the same machine, 127.0.0.1 is fine, but 0.0.0.0 is more flexible
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=True)
