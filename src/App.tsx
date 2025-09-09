@@ -1,25 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
+// Interface for the data structure sent to the backend
 interface BreakLogData {
   breakType: string;
   mood: string;
 }
 
 function App() {
-  const [timeLeft, setTimeLeft] = useState<number>(1500); // 1500 seconds = 25 minutes
+  // State for timer
+  const [timeLeft, setTimeLeft] = useState<number>(3); // *using 3 secs for test purporse* -- 1500 seconds = 25 minutes
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [showPrompt, setShowPrompt] = useState<boolean>(false);
+
+  // State for break logging form
   const [breakType, setBreakType] = useState<string>('lunch');
   const [mood, setMood] = useState<string>('');
-  const [error, setError] = useState<string>('');
-  const [sentiment, setSentiment] = useState<number | null>(null);
-  const [sentimentMessage, setSentimentMessage] = useState<string>('');
+  const [error, setError] = useState<string>(''); // For validation and connection errors
 
+  // State for sentiment analysis results
+  const [sentiment, setSentiment] = useState<number | null>(null); // Stores the sentiment score from backend
+  const [sentimentMessage, setSentimentMessage] = useState<string>(''); // Stores the user-friendly message
+
+  // Effect hook for the timer
   useEffect(() => {
     if (!isRunning || timeLeft === 0) {
       if (timeLeft === 0) {
-        setShowPrompt(true);
+        setShowPrompt(true); // Show the break prompt when timer hits zero
       }
       return;
     }
@@ -28,9 +35,10 @@ function App() {
       setTimeLeft((prevTime) => prevTime - 1);
     }, 1000);
 
-    return () => clearInterval(intervalId);
+    return () => clearInterval(intervalId); // Cleanup function to clear interval
   }, [isRunning, timeLeft]);
 
+  // Timer control functions
   const startTimer = () => {
     setIsRunning(true);
   };
@@ -41,13 +49,15 @@ function App() {
 
   const resetTimer = () => {
     setIsRunning(false);
-    setTimeLeft(1500);
+    setTimeLeft(1500); // Reset to default 25 minutes
     setShowPrompt(false);
     setSentiment(null); // Reset sentiment state
     setMood(''); // Reset mood state
-    setBreakType('lunch'); // Reset break type
+    setBreakType('lunch'); // Reset break type to default
+    setError(''); // Clear any previous errors
   };
 
+  // Helper function to translate sentiment score to a message
   const getSentimentMessage = (score: number): string => {
     if (score >= 0.05) {
       return "You're feeling pretty positive! Keep up the good work.";
@@ -58,13 +68,15 @@ function App() {
     }
   };
 
+  // Handles form submission, including validation and backend communication
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
-    setError('');
+    setError(''); // Clear previous errors
 
+    // Frontend validation: ensure mood is not empty
     if (!mood) {
       setError('Please enter how you are feeling before continuing.');
-      return;
+      return; // Stop submission if validation fails
     }
 
     const data: BreakLogData = {
@@ -82,34 +94,41 @@ function App() {
       });
 
       if (response.ok) {
+        // Successfully sent data to backend
         const responseData = await response.json();
-        const sentimentScore: number = responseData.sentiment_score;
+        const sentimentScore: number = responseData.sentiment_score; // Get score from backend
 
-        setSentiment(sentimentScore);
-        setSentimentMessage(getSentimentMessage(sentimentScore));
-        
+        setSentiment(sentimentScore); // Store the score
+        setSentimentMessage(getSentimentMessage(sentimentScore)); // Generate user-friendly message
+
         console.log('Backend sentiment analysis score:', sentimentScore);
 
+        // The timer will reset via the "Done" button after sentiment is displayed
       } else {
+        // Handle backend errors (e.g., server returned 400, 500)
         console.error('Failed to log break on the backend.');
         setError('Failed to log break. Please try again.');
       }
     } catch (error) {
+      // Handle network errors (e.g., server not running, CORS issues)
       console.error('Error connecting to the backend:', error);
       setError('Error: Cannot connect to the server.');
     }
   };
 
+  // Time formatting for display
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
-  const progressPercentage = (timeLeft / 1500) * 100;
+  const progressPercentage = (timeLeft / 1500) * 100; // Progress based on default 25 mins
 
+  // Conditional rendering: show prompt or timer
   if (showPrompt) {
     return (
       <div className="App">
         <h1>PauseQuest Break Time!</h1>
         <div className="prompt-container">
           {sentiment === null ? (
+            // Display the form if sentiment hasn't been received yet
             <>
               <h2>It's time for a break.</h2>
               <form onSubmit={handleSubmit}>
@@ -141,6 +160,7 @@ function App() {
               </form>
             </>
           ) : (
+            // Display the sentiment results after successful submission
             <div className="sentiment-results">
               <h2>Your break analysis:</h2>
               <p className="sentiment-message">{sentimentMessage}</p>
@@ -152,6 +172,7 @@ function App() {
     );
   }
 
+  // Render the main timer view
   return (
     <div className="App">
       <h1>PauseQuest Timer</h1>
@@ -163,8 +184,8 @@ function App() {
           <button onClick={resetTimer}>Reset</button>
         </div>
         <div className="progress-bar-container">
-          <div 
-            className="progress-bar" 
+          <div
+            className="progress-bar"
             style={{ width: `${progressPercentage}%` }}
           ></div>
         </div>
