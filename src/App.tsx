@@ -12,7 +12,7 @@ function App() {
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [showPrompt, setShowPrompt] = useState<boolean>(false);
 
-  const [breakType, setBreakType] = useState<string>('lunch');
+  const [breakType, setBreakType] = useState<string>('snack');
   const [mood, setMood] = useState<string>('');
   const [error, setError] = useState<string>('');
 
@@ -66,15 +66,15 @@ function App() {
     }
   };
 
-  // Handles form submission, including validation and backend communication
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
-    setError(''); // Clear previous errors
+    setError('');
 
-    // Frontend validation: ensure mood is not empty
+
     if (!mood) {
       setError('Please enter how you are feeling before continuing.');
-      return; // Stop submission if validation fails
+      return;
     }
 
     const data: BreakLogData = {
@@ -92,23 +92,23 @@ function App() {
       });
 
       if (response.ok) {
-        // Successfully sent data to backend
-        const responseData = await response.json();
-        const sentimentScore: number = responseData.sentiment_score; // Get score from backend
 
-        setSentiment(sentimentScore); // Store the score
-        setSentimentMessage(getSentimentMessage(sentimentScore)); // Generate user-friendly message
+        const responseData = await response.json();
+        const sentimentScore: number = responseData.sentiment_score;
+
+        setSentiment(sentimentScore);
+        setSentimentMessage(getSentimentMessage(sentimentScore));
 
         console.log('Backend sentiment analysis score:', sentimentScore);
 
         // The timer will reset via the "Done" button after sentiment is displayed
       } else {
-        // Handle backend errors (e.g., server returned 400, 500)
+
         console.error('Failed to log break on the backend.');
         setError('Failed to log break. Please try again.');
       }
     } catch (error) {
-      // Handle network errors (e.g., server not running, CORS issues)
+
       console.error('Error connecting to the backend:', error);
       setError('Error: Cannot connect to the server.');
     }
@@ -117,16 +117,16 @@ function App() {
   // Time formatting for display
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
-  const progressPercentage = (timeLeft / 1500) * 100; // Progress based on default 25 mins
+  const progressPercentage = (timeLeft / 1500) * 100;
 
-  // Conditional rendering: show prompt or timer
+  //
   if (showPrompt) {
     return (
       <div className="App">
         <h1>PauseQuest Break Time!</h1>
         <div className="prompt-container">
           {sentiment === null ? (
-            // Display the form if sentiment hasn't been received yet
+
             <>
               <h2>It's time for a break.</h2>
               <form onSubmit={handleSubmit}>
