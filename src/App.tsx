@@ -1,32 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
-// Interface for the data structure sent to the backend
 interface BreakLogData {
   breakType: string;
   mood: string;
 }
 
 function App() {
-  // State for timer
-  const [timeLeft, setTimeLeft] = useState<number>(3); // *using 3 secs for test purporse* -- 1500 seconds = 25 minutes
+
+  const [timeLeft, setTimeLeft] = useState<number>(1500); // 1500 seconds = 25 minutes
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [showPrompt, setShowPrompt] = useState<boolean>(false);
 
-  // State for break logging form
   const [breakType, setBreakType] = useState<string>('lunch');
   const [mood, setMood] = useState<string>('');
-  const [error, setError] = useState<string>(''); // For validation and connection errors
+  const [error, setError] = useState<string>('');
 
-  // State for sentiment analysis results
-  const [sentiment, setSentiment] = useState<number | null>(null); // Stores the sentiment score from backend
-  const [sentimentMessage, setSentimentMessage] = useState<string>(''); // Stores the user-friendly message
 
-  // Effect hook for the timer
+  const [sentiment, setSentiment] = useState<number | null>(null);
+  const [sentimentMessage, setSentimentMessage] = useState<string>('');
+
+
   useEffect(() => {
     if (!isRunning || timeLeft === 0) {
       if (timeLeft === 0) {
-        setShowPrompt(true); // Show the break prompt when timer hits zero
+        setShowPrompt(true);
       }
       return;
     }
@@ -35,10 +33,10 @@ function App() {
       setTimeLeft((prevTime) => prevTime - 1);
     }, 1000);
 
-    return () => clearInterval(intervalId); // Cleanup function to clear interval
+    return () => clearInterval(intervalId);
   }, [isRunning, timeLeft]);
 
-  // Timer control functions
+
   const startTimer = () => {
     setIsRunning(true);
   };
@@ -49,12 +47,12 @@ function App() {
 
   const resetTimer = () => {
     setIsRunning(false);
-    setTimeLeft(1500); // Reset to default 25 minutes
+    setTimeLeft(1500);
     setShowPrompt(false);
-    setSentiment(null); // Reset sentiment state
-    setMood(''); // Reset mood state
-    setBreakType('lunch'); // Reset break type to default
-    setError(''); // Clear any previous errors
+    setSentiment(null);
+    setMood('');
+    setBreakType('stretch');
+    setError('');
   };
 
   // Helper function to translate sentiment score to a message
