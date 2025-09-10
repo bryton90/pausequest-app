@@ -24,4 +24,4 @@ dist-ssr
 *.sw?
 
 # filepath: pausequest-app/
-venv/
+*.venv/
