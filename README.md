@@ -46,9 +46,8 @@ PauseQuest is a productivity web-app designed to help you manage your work sessi
 
 ---
 
-## Screenshots
+## Screenshot
 
-![PauseQuest Timer](public/vite.svg)
 *Example of the timer interface.*
 
 ---
