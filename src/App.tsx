@@ -8,7 +8,7 @@ interface BreakLogData {
 
 function App() {
 
-  const [timeLeft, setTimeLeft] = useState<number>(1500); // 1500 seconds = 25 minutes
+  const [timeLeft, setTimeLeft] = useState<number>(60); // 1500 seconds = 25 minutes
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [showPrompt, setShowPrompt] = useState<boolean>(false);
 
