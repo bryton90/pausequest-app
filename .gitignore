@@ -26,3 +26,4 @@ dist-ssr
 
 # filepath: pausequest-app/
 *.venv/
+.windsurf
