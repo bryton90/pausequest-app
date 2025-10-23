@@ -18,5 +18,5 @@ export interface BreakLogData {
 // Interface for the API response
 export interface ApiResponse {
   sentiment_score: number;
-  // Add other fields from the API response as needed
+  // Add other fields
 }
