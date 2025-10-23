@@ -1,0 +1,126 @@
+.rocket-container {
+  position: relative;
+  width: 80px;
+  height: 200px;
+  margin: 20px auto;
+}
+
+.rocket {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  transition: bottom 1s linear;
+  z-index: 10;
+}
+
+.rocket.liftoff {
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(-50%) rotate(0deg); }
+  25% { transform: translateX(-48%) rotate(-2deg); }
+  75% { transform: translateX(-52%) rotate(2deg); }
+}
+
+.rocket-body {
+  width: 40px;
+  height: 60px;
+  background: linear-gradient(to bottom, #e0e0e0, #b0b0b0);
+  border-radius: 5px;
+  position: relative;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.rocket-nose {
+  width: 0;
+  height: 0;
+  border-left: 20px solid transparent;
+  border-right: 20px solid transparent;
+  border-bottom: 30px solid #ff6b6b;
+  position: absolute;
+  top: -30px;
+  left: 0;
+}
+
+.rocket-window {
+  width: 15px;
+  height: 15px;
+  background: #66fcf1;
+  border-radius: 50%;
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
+.rocket-fin {
+  width: 0;
+  height: 0;
+  border-top: 15px solid transparent;
+  border-bottom: 15px solid transparent;
+  position: absolute;
+  bottom: 0;
+}
+
+.rocket-fin-left {
+  border-right: 15px solid #8b8b8b;
+  left: -15px;
+}
+
+.rocket-fin-right {
+  border-left: 15px solid #8b8b8b;
+  right: -15px;
+}
+
+.flame {
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 30px;
+}
+
+.flame-inner {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, #ffff00, #ff6600, #ff0000);
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  animation: flicker 0.1s infinite alternate;
+}
+
+@keyframes flicker {
+  0% { transform: scale(1) translateY(0); }
+  100% { transform: scale(1.1) translateY(-2px); }
+}
+
+.flame-high .flame-inner {
+  height: 40px;
+  opacity: 1;
+}
+
+.flame-medium .flame-inner {
+  height: 30px;
+  opacity: 0.8;
+}
+
+.flame-low .flame-inner {
+  height: 20px;
+  opacity: 0.6;
+}
+
+.flame-none {
+  display: none;
+}
+
+.launch-pad {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 10px;
+  background: linear-gradient(to bottom, #45a29e, #1f2833);
+  border-radius: 5px;
+}
