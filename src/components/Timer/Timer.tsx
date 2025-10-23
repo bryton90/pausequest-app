@@ -1,4 +1,6 @@
 import React from 'react';
+import { BatteryIndicator } from '../BatteryIndicator/BatteryIndicator';
+import { RocketAnimation } from '../RocketAnimation/RocketAnimation';
 
 interface TimerProps {
   timeLeft: number;
@@ -6,6 +8,8 @@ interface TimerProps {
   onStart: () => void;
   onStop: () => void;
   onReset: () => void;
+  totalTime: number;
+  animationType: 'battery' | 'rocket' | 'both';
 }
 
 export const Timer: React.FC<TimerProps> = ({
@@ -14,13 +18,25 @@ export const Timer: React.FC<TimerProps> = ({
   onStart,
   onStop,
   onReset,
+  totalTime,
+  animationType,
 }) => {
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
-  const progressPercentage = (timeLeft / 1500) * 100;
+  const progressPercentage = (timeLeft / totalTime) * 100;
 
   return (
     <div className="timer-container">
+      {/* Animation Display */}
+      <div className="animation-display">
+        {(animationType === 'battery' || animationType === 'both') && (
+          <BatteryIndicator percentage={progressPercentage} />
+        )}
+        {(animationType === 'rocket' || animationType === 'both') && (
+          <RocketAnimation percentage={progressPercentage} isRunning={isRunning} />
+        )}
+      </div>
+
       <h2>
         {minutes.toString().padStart(2, '0')}:
         {seconds.toString().padStart(2, '0')}
