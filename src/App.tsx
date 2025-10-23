@@ -1,195 +1,111 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
+import { useTimer } from './hooks/useTimer';
+import { BreakForm } from './components/BreakForm/BreakForm';
+import { SentimentDisplay } from './components/SentimentDisplay/SentimentDisplay';
+import { Timer } from './components/Timer/Timer';
+import { logBreak } from './api/breakService';
+import { getSentimentMessage } from './utils/sentiment';
 import './App.css';
 
-interface BreakLogData {
-  breakType: string;
-  mood: string;
-}
+const WORK_SESSION_DURATION = 1500; // 25 minutes in seconds
 
-function App() {
-
-  const [timeLeft, setTimeLeft] = useState<number>(60); // 1500 seconds = 25 minutes
-  const [isRunning, setIsRunning] = useState<boolean>(false);
+const App: React.FC = () => {
   const [showPrompt, setShowPrompt] = useState<boolean>(false);
-
   const [breakType, setBreakType] = useState<string>('snack');
   const [mood, setMood] = useState<string>('');
   const [error, setError] = useState<string>('');
-
-
   const [sentiment, setSentiment] = useState<number | null>(null);
   const [sentimentMessage, setSentimentMessage] = useState<string>('');
 
+  const handleTimeEnd = useCallback(() => {
+    setShowPrompt(true);
+  }, []);
 
-  useEffect(() => {
-    if (!isRunning || timeLeft === 0) {
-      if (timeLeft === 0) {
-        setShowPrompt(true);
-      }
-      return;
-    }
+  const {
+    timeLeft,
+    isRunning,
+    startTimer,
+    stopTimer,
+    resetTimer: resetTimerHook
+  } = useTimer({
+    initialTime: WORK_SESSION_DURATION,
+    onTimeEnd: handleTimeEnd
+  });
 
-    const intervalId = setInterval(() => {
-      setTimeLeft((prevTime) => prevTime - 1);
-    }, 1000);
-
-    return () => clearInterval(intervalId);
-  }, [isRunning, timeLeft]);
-
-
-  const startTimer = () => {
-    setIsRunning(true);
-  };
-
-  const stopTimer = () => {
-    setIsRunning(false);
-  };
-
-  const resetTimer = () => {
-    setIsRunning(false);
-    setTimeLeft(1500);
+  const resetTimer = useCallback(() => {
+    resetTimerHook(WORK_SESSION_DURATION);
     setShowPrompt(false);
     setSentiment(null);
     setMood('');
-    setBreakType('stretch');
+    setBreakType('snack');
     setError('');
-  };
+  }, [resetTimerHook]);
 
-  // Helper function to translate sentiment score to a message
-  const getSentimentMessage = (score: number): string => {
-    if (score >= 0.05) {
-      return "You're feeling pretty positive! Keep up the good work.";
-    } else if (score <= -0.05) {
-      return "You seem a little negative. Remember to take a mindful break.";
-    } else {
-      return "You're feeling quite neutral. A little refresh might help!";
-    }
-  };
+  const handleBreakTypeChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    setBreakType(e.target.value);
+  }, []);
 
+  const handleMoodChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setMood(e.target.value);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     setError('');
 
-
-    if (!mood) {
+    if (!mood.trim()) {
       setError('Please enter how you are feeling before continuing.');
       return;
     }
 
-    const data: BreakLogData = {
-      breakType,
-      mood,
-    };
-
     try {
-      const response: Response = await fetch('http://127.0.0.1:5000/log-break', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (response.ok) {
-
-        const responseData = await response.json();
-        const sentimentScore: number = responseData.sentiment_score;
-
-        setSentiment(sentimentScore);
-        setSentimentMessage(getSentimentMessage(sentimentScore));
-
-        console.log('Backend sentiment analysis score:', sentimentScore);
-
-        // The timer will reset via the "Done" button after sentiment is displayed
-      } else {
-
-        console.error('Failed to log break on the backend.');
-        setError('Failed to log break. Please try again.');
-      }
+      const response = await logBreak({ breakType, mood });
+      const sentimentScore = response.sentiment_score;
+      
+      setSentiment(sentimentScore);
+      setSentimentMessage(getSentimentMessage(sentimentScore));
+      console.log('Backend sentiment analysis score:', sentimentScore);
     } catch (error) {
-
-      console.error('Error connecting to the backend:', error);
-      setError('Error: Cannot connect to the server.');
+      console.error('Error logging break:', error);
+      setError('Failed to log break. Please try again.');
     }
   };
 
-  // Time formatting for display
-  const minutes = Math.floor(timeLeft / 60);
-  const seconds = timeLeft % 60;
-  const progressPercentage = (timeLeft / 1500) * 100;
-
-  //
-  if (showPrompt) {
-    return (
-      <div className="App">
-        <h1>PauseQuest Break Time!</h1>
-        <div className="prompt-container">
-          {sentiment === null ? (
-
-            <>
-              <h2>It's time for a break.</h2>
-              <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                  <label htmlFor="breakType">What kind of break was it?</label>
-                  <select
-                    id="breakType"
-                    value={breakType}
-                    onChange={(e) => setBreakType(e.target.value)}
-                  >
-                    <option value="lunch">Lunch 🍽️</option>
-                    <option value="snack">Snack 🍎</option>
-                    <option value="water">Water 💧</option>
-                    <option value="stretch">Stretch 🤸‍♂️</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label htmlFor="mood">How are you feeling?</label>
-                  <textarea
-                    id="mood"
-                    rows={4}
-                    value={mood}
-                    onChange={(e) => setMood(e.target.value)}
-                    placeholder="I'm feeling... tired, energized, stressed, etc."
-                  />
-                </div>
-                {error && <p className="error-message">{error}</p>}
-                <button type="submit">Log Break</button>
-              </form>
-            </>
-          ) : (
-            // Display the sentiment results after successful submission
-            <div className="sentiment-results">
-              <h2>Your break analysis:</h2>
-              <p className="sentiment-message">{sentimentMessage}</p>
-              <button onClick={resetTimer}>Done</button>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // Render the main timer view
   return (
     <div className="App">
-      <h1>PauseQuest Timer</h1>
-      <div className="timer-container">
-        <h2>{minutes.toString().padStart(2, '0')}:{seconds.toString().padStart(2, '0')}</h2>
-        <div>
-          <button onClick={startTimer}>Start</button>
-          <button onClick={stopTimer}>Stop</button>
-          <button onClick={resetTimer}>Reset</button>
+      {!showPrompt ? (
+        <>
+          <h1>PauseQuest Timer</h1>
+          <Timer
+            timeLeft={timeLeft}
+            isRunning={isRunning}
+            onStart={startTimer}
+            onStop={stopTimer}
+            onReset={resetTimer}
+          />
+        </>
+      ) : (
+        <div className="break-container">
+          <h1>PauseQuest Break Time!</h1>
+          {sentiment === null ? (
+            <BreakForm
+              breakType={breakType}
+              mood={mood}
+              error={error}
+              onBreakTypeChange={handleBreakTypeChange}
+              onMoodChange={handleMoodChange}
+              onSubmit={handleSubmit}
+            />
+          ) : (
+            <SentimentDisplay
+              sentimentMessage={sentimentMessage}
+              onReset={resetTimer}
+            />
+          )}
         </div>
-        <div className="progress-bar-container">
-          <div
-            className="progress-bar"
-            style={{ width: `${progressPercentage}%` }}
-          ></div>
-        </div>
-      </div>
+      )}
     </div>
   );
-}
+};
 
 export default App;
