@@ -38,6 +38,7 @@ export const applyTheme = (theme: Theme): void => {
   const colors = themes[theme];
   const root = document.documentElement;
 
+  // Set old CSS variables for backward compatibility
   root.style.setProperty('--bg-color', colors.background);
   root.style.setProperty('--card-bg-color', colors.cardBackground);
   root.style.setProperty('--text-color', colors.text);
@@ -46,6 +47,13 @@ export const applyTheme = (theme: Theme): void => {
   root.style.setProperty('--secondary-color', colors.secondary);
   root.style.setProperty('--accent-color', colors.accent);
   root.style.setProperty('--border-color', colors.border);
+
+  // Apply Tailwind dark mode class
+  if (theme === 'dark') {
+    root.classList.add('dark');
+  } else {
+    root.classList.remove('dark');
+  }
 
   localStorage.setItem('pausequest-theme', theme);
 };
