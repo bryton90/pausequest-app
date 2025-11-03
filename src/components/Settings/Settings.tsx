@@ -1,6 +1,7 @@
 import React from 'react';
 import { UserSettings, timerPresets } from '../../utils/theme';
 import './Settings.css';
+import { useBreakTypes } from '../../hooks/useBreakTypes';
 
 interface SettingsProps {
   settings: UserSettings;
@@ -12,6 +13,10 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
   const handleChange = (key: keyof UserSettings, value: any) => {
     onSettingsChange({ ...settings, [key]: value });
   };
+
+  const { breakTypes, addType, removeType, resetDefaults } = useBreakTypes();
+  const [newLabel, setNewLabel] = React.useState('');
+  const [newEmoji, setNewEmoji] = React.useState('');
 
   return (
     <div className="settings-overlay">
@@ -115,6 +120,45 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
                 <span>{Math.round(settings.soundVolume * 100)}%</span>
               </div>
             )}
+          </div>
+
+          {/* Break Types */}
+          <div className="settings-section">
+            <h3>🧩 Break Types</h3>
+            <div className="setting-item" style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              <input
+                type="text"
+                placeholder="Label (e.g., Walk)"
+                value={newLabel}
+                onChange={(e) => setNewLabel(e.target.value)}
+              />
+              <input
+                type="text"
+                placeholder="Emoji (optional)"
+                value={newEmoji}
+                onChange={(e) => setNewEmoji(e.target.value)}
+                style={{ width: 120 }}
+              />
+              <button
+                onClick={() => {
+                  if (!newLabel.trim()) return;
+                  addType(newLabel, newEmoji || undefined);
+                  setNewLabel('');
+                  setNewEmoji('');
+                }}
+              >Add</button>
+              <button onClick={resetDefaults}>Reset Defaults</button>
+            </div>
+            <div className="setting-item">
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                {breakTypes.map((t) => (
+                  <li key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <span>{t.label} {t.emoji}</span>
+                    <button onClick={() => removeType(t.id)}>Remove</button>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
 
