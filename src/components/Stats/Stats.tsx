@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { UserStats } from '../../utils/gamification';
 import './Stats.css';
+import { getSessionHistory, Session } from '../../api/breakService';
+import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
 
 interface StatsProps {
   stats: UserStats;
@@ -11,6 +13,32 @@ export const Stats: React.FC<StatsProps> = ({ stats, onClose }) => {
   const unlockedAchievements = stats.achievements.filter(a => a.unlocked);
   const lockedAchievements = stats.achievements.filter(a => !a.unlocked);
 
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    getSessionHistory(14)
+      .then((res) => {
+        setSessions(res.sessions);
+        setError(null);
+      })
+      .catch(() => setError('Failed to load recent sessions'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const chartData = useMemo(() => {
+    return sessions
+      .slice()
+      .reverse()
+      .map((s) => ({
+        date: new Date(s.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+        focusMin: Math.round(s.focus_duration / 60),
+        breakMin: Math.round(s.break_duration / 60),
+      }));
+  }, [sessions]);
+
   return (
     <div className="stats-overlay">
       <div className="stats-modal">
@@ -20,6 +48,30 @@ export const Stats: React.FC<StatsProps> = ({ stats, onClose }) => {
         </div>
         
         <div className="stats-content">
+          {/* Progress Chart */}
+          <div className="stats-section" style={{ marginBottom: 24 }}>
+            <h3>📈 Recent Focus vs Break</h3>
+            {loading && <div>Loading chart…</div>}
+            {error && <div className="error-message">{error}</div>}
+            {!loading && !error && chartData.length === 0 && (
+              <div>No recent sessions yet. Complete a session to see your progress.</div>
+            )}
+            {!loading && !error && chartData.length > 0 && (
+              <div style={{ width: '100%', height: 260 }}>
+                <ResponsiveContainer>
+                  <BarChart data={chartData} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis label={{ value: 'minutes', angle: -90, position: 'insideLeft' }} />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="focusMin" name="Focus (min)" fill="#4f46e5" radius={[4,4,0,0]} />
+                    <Bar dataKey="breakMin" name="Break (min)" fill="#22c55e" radius={[4,4,0,0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
           {/* Main Stats */}
           <div className="stats-grid">
             <div className="stat-card">
