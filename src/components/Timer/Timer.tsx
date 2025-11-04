@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { RocketAnimation } from '../RocketAnimation/RocketAnimation';
+import { LoadingSpinner } from '../common/LoadingSpinner';
+import { withErrorBoundary } from '../common/ErrorBoundary';
+
+// Add error boundary wrapper to RocketAnimation
+const RocketAnimationWithBoundary = withErrorBoundary(RocketAnimation);
 
 interface TimerProps {
   timeLeft: number;
@@ -18,7 +23,7 @@ const CIRCLE_COLORS = {
   break: '#10b981', // green
 };
 
-export const Timer: React.FC<TimerProps> = ({
+const TimerComponent: React.FC<TimerProps> = ({
   timeLeft,
   isRunning,
   onStart,
@@ -28,6 +33,7 @@ export const Timer: React.FC<TimerProps> = ({
   animationType,
 }) => {
   const [showAnimation, setShowAnimation] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
   const progressPercentage = (timeLeft / totalTime) * 100;
@@ -35,12 +41,26 @@ export const Timer: React.FC<TimerProps> = ({
 
   // Handle animation when timer reaches zero or is reset
   useEffect(() => {
-    if (timeLeft === 0) {
-      setShowAnimation(true);
-    } else if (timeLeft === totalTime) {
-      setShowAnimation(false);
+    try {
+      if (timeLeft === 0) {
+        setShowAnimation(true);
+      } else if (timeLeft === totalTime) {
+        setShowAnimation(false);
+      }
+      setIsInitialized(true);
+    } catch (error) {
+      console.error('Error in timer effect:', error);
+      throw error; // This will be caught by the error boundary
     }
   }, [timeLeft, totalTime]);
+
+  if (!isInitialized) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
 
   // Data for circular progress (dual ring visualization would be too complex, using single ring)
   const chartData = [
@@ -54,7 +74,7 @@ export const Timer: React.FC<TimerProps> = ({
       {showAnimation ? (
         <div className="w-64 h-64 flex items-center justify-center">
           {animationType === 'rocket' || animationType === 'both' ? (
-            <RocketAnimation 
+            <RocketAnimationWithBoundary 
               percentage={progressPercentage} 
               isRunning={isRunning} 
             />
@@ -133,5 +153,8 @@ export const Timer: React.FC<TimerProps> = ({
     </div>
   );
 };
+
+// Wrap Timer with error boundary
+export const Timer = withErrorBoundary(TimerComponent);
 
 export default Timer;
