@@ -3,8 +3,10 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTimer } from '../hooks/useTimer';
 import TimerVisualization from '../components/TimerVisualization';
 import { useSettings } from '../contexts/SettingsContext';
+import { useGamification } from '../contexts/GamificationContext';
 import { analyzePatterns } from '../services/aiService';
 import { MoodTracker } from '../components/MoodTracker/MoodTracker';
+import GamificationStats from '../components/GamificationStats';
 import SettingsPanel from '../components/SettingsPanel';
 
 const MOODS = [
@@ -17,6 +19,7 @@ const MOODS = [
 const TimerPage: React.FC = () => {
   const { user } = useAuth();
   const { timerVisualization, showMoodAvatars } = useSettings();
+  const { addXp, checkForAchievements } = useGamification();
   const [isRunning, setIsRunning] = useState(false);
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [moodEmoji, setMoodEmoji] = useState<string>('');
@@ -51,12 +54,22 @@ const TimerPage: React.FC = () => {
   const handleStart = useCallback(() => {
     startTimer();
     setIsRunning(true);
-  }, [startTimer]);
+    
+    // Add XP for starting a session
+    addXp(10, 'session_started');
+  }, [startTimer, addXp]);
 
   const handleStop = useCallback(() => {
     stopTimer();
     setIsRunning(false);
-  }, [stopTimer]);
+    
+    // Add XP for completing a session
+    const sessionXp = Math.floor((workDuration - timeLeft) / 60) * 2; // 2 XP per minute
+    addXp(sessionXp, 'session_completed');
+    
+    // Check for session-related achievements
+    checkForAchievements('session');
+  }, [stopTimer, workDuration, timeLeft, addXp, checkForAchievements]);
 
   const handleReset = useCallback(() => {
     resetTimer(workDuration);
@@ -108,17 +121,31 @@ const TimerPage: React.FC = () => {
         const updatedSessions = [...sessionHistory, newSession];
         const patternAnalysis = analyzePatterns(updatedSessions);
         setAnalysis(patternAnalysis);
+        
+        // Add XP for saving notes
+        if (notes.trim().length > 0) {
+          addXp(5, 'notes_saved');
+        }
+        
+        // Check for achievements
+        checkForAchievements('break');
       }
     } catch (error) {
       console.error('Failed to save session:', error);
     }
-  }, [notes, selectedMood, moodEmoji, sessionHistory, workDuration, timeLeft]);
+  }, [notes, selectedMood, moodEmoji, sessionHistory, workDuration, timeLeft, addXp, checkForAchievements]);
 
   const progress = 1 - timeLeft / workDuration;
   const handleMoodChange = useCallback((mood: string, emoji: string) => {
     setSelectedMood(mood === selectedMood ? null : mood);
     setMoodEmoji(emoji);
-  }, [selectedMood]);
+    
+    // Add XP for mood tracking
+    addXp(5, 'mood_tracked');
+    
+    // Check for mood-related achievements
+    checkForAchievements('mood');
+  }, [selectedMood, addXp, checkForAchievements]);
 
   const handleSuggestion = useCallback((suggestion: {type: string; description: string}) => {
     setAiSuggestion(suggestion);
@@ -185,6 +212,9 @@ const TimerPage: React.FC = () => {
               </button>
             </div>
           </div>
+          
+          {/* Gamification Stats */}
+          <GamificationStats />
           
           {/* Mood Tracking Section */}
           <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">

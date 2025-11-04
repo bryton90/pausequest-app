@@ -52,7 +52,6 @@ export const getBreakSuggestion = (mood: string) => {
 export const analyzePatterns = (sessions: any[]) => {
   if (sessions.length === 0) return null;
   
-  // Simple pattern analysis - can be enhanced with more sophisticated algorithms
   const moodCounts: Record<string, number> = {};
   let totalScore = 0;
   
