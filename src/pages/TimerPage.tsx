@@ -3,6 +3,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTimer } from '../hooks/useTimer';
 import TimerVisualization from '../components/TimerVisualization';
 import { useSettings } from '../contexts/SettingsContext';
+import { analyzePatterns } from '../services/aiService';
+import { MoodTracker } from '../components/MoodTracker/MoodTracker';
 import SettingsPanel from '../components/SettingsPanel';
 
 const MOODS = [
@@ -17,8 +19,17 @@ const TimerPage: React.FC = () => {
   const { timerVisualization, showMoodAvatars } = useSettings();
   const [isRunning, setIsRunning] = useState(false);
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
+  const [moodEmoji, setMoodEmoji] = useState<string>('');
   const [notes, setNotes] = useState('');
   const [showSettings, setShowSettings] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState<{type: string; description: string} | null>(null);
+  const [sessionHistory, setSessionHistory] = useState<any[]>([]);
+  const [showAnalysis, setShowAnalysis] = useState(false);
+  const [analysis, setAnalysis] = useState<{
+    mostCommonMood: string | null;
+    averageSentiment: number;
+    suggestion: string;
+  } | null>(null);
   
   // Default to 25 minutes if no user preferences are set
   const workDuration = user?.preferences?.workDuration || 25 * 60;
@@ -54,12 +65,65 @@ const TimerPage: React.FC = () => {
     setNotes('');
   }, [resetTimer, workDuration]);
 
-  const handleSaveNotes = useCallback(() => {
-    console.log('Notes submitted:', notes);
-    // Add your save logic here
-  }, [notes]);
+  // Load session history on component mount
+  useEffect(() => {
+    const loadSessions = async () => {
+      try {
+        const response = await fetch('/api/sessions');
+        if (response.ok) {
+          const data = await response.json();
+          setSessionHistory(data);
+          
+          // Analyze patterns
+          const patternAnalysis = analyzePatterns(data);
+          setAnalysis(patternAnalysis);
+        }
+      } catch (error) {
+        console.error('Failed to load session history:', error);
+      }
+    };
+
+    loadSessions();
+  }, []);
+
+  const handleSaveNotes = useCallback(async () => {
+    try {
+      const response = await fetch('/api/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mood: selectedMood,
+          mood_emoji: moodEmoji,
+          notes,
+          focus_duration: workDuration - timeLeft,
+          break_duration: 0, // This would be updated when the break is taken
+        }),
+      });
+
+      if (response.ok) {
+        const newSession = await response.json();
+        setSessionHistory(prev => [...prev, newSession]);
+        
+        // Update analysis with new data
+        const updatedSessions = [...sessionHistory, newSession];
+        const patternAnalysis = analyzePatterns(updatedSessions);
+        setAnalysis(patternAnalysis);
+      }
+    } catch (error) {
+      console.error('Failed to save session:', error);
+    }
+  }, [notes, selectedMood, moodEmoji, sessionHistory, workDuration, timeLeft]);
 
   const progress = 1 - timeLeft / workDuration;
+  const handleMoodChange = useCallback((mood: string, emoji: string) => {
+    setSelectedMood(mood === selectedMood ? null : mood);
+    setMoodEmoji(emoji);
+  }, [selectedMood]);
+
+  const handleSuggestion = useCallback((suggestion: {type: string; description: string}) => {
+    setAiSuggestion(suggestion);
+  }, []);
+
   const currentMood = useMemo(() => {
     return MOODS.find(mood => mood.emoji === selectedMood) || null;
   }, [selectedMood]);
@@ -69,7 +133,7 @@ const TimerPage: React.FC = () => {
       <div className="max-w-md mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
         {/* Header */}
         <div className="p-6 bg-gradient-to-r from-emerald-500 to-teal-600 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-white">Mood follows action</h1>
+          <h1 className="text-2xl font-bold text-white">Mood Follows Actions</h1>
           <button
             onClick={() => setShowSettings(true)}
             className="p-2 text-white hover:bg-white/10 rounded-full transition-colors"
@@ -122,36 +186,61 @@ const TimerPage: React.FC = () => {
             </div>
           </div>
           
-          {/* Mood Section */}
+          {/* Mood Tracking Section */}
           <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-            <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-3">How are you feeling?</h2>
-            <div className="flex justify-between">
-              {MOODS.map((mood) => (
-                <button
-                  key={mood.emoji}
-                  className={`text-4xl p-2 rounded-full transition-all ${selectedMood === mood.emoji 
-                    ? `scale-110 ${mood.color} bg-opacity-20 dark:bg-opacity-20 p-3` 
-                    : 'hover:bg-gray-100 dark:hover:bg-gray-600'}`}
-                  onClick={() => setSelectedMood(mood.emoji === selectedMood ? null : mood.emoji)}
-                  aria-label={`Select mood: ${mood.label}`}
-                  title={mood.label}
-                >
-                  {mood.emoji}
-                </button>
-              ))}
-            </div>
+            <MoodTracker 
+              selectedMood={selectedMood}
+              onMoodChange={handleMoodChange}
+              notes={notes}
+              onNotesChange={setNotes}
+              onSuggestion={handleSuggestion}
+            />
             
-            {showMoodAvatars && selectedMood && (
-              <div className="mt-4 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                <h3 className="text-md font-medium text-gray-700 dark:text-gray-200 mb-2">
-                  {currentMood?.label} Mode Activated!
+            {/* AI Suggestion */}
+            {aiSuggestion && (
+              <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
+                <h3 className="text-md font-medium text-blue-800 dark:text-blue-200 mb-2 flex items-center">
+                  <span className="mr-2">💡 AI Suggestion</span>
                 </h3>
-                <div className="flex items-center space-x-4">
-                  <span className="text-6xl">{currentMood?.emoji}</span>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    {getMoodMessage(currentMood?.emoji)}
-                  </p>
+                <p className="text-blue-700 dark:text-blue-300">
+                  {aiSuggestion.description}
+                </p>
+              </div>
+            )}
+            
+            {/* Pattern Analysis */}
+            {analysis && (
+              <div className="mt-6 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-100 dark:border-purple-800">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="text-md font-medium text-purple-800 dark:text-purple-200">
+                    Your Pattern Analysis
+                  </h3>
+                  <button 
+                    onClick={() => setShowAnalysis(!showAnalysis)}
+                    className="text-xs text-purple-600 dark:text-purple-400 hover:underline"
+                  >
+                    {showAnalysis ? 'Hide' : 'Show'}
+                  </button>
                 </div>
+                
+                {showAnalysis && (
+                  <div className="mt-2 text-sm text-purple-700 dark:text-purple-300">
+                    {analysis.mostCommonMood && (
+                      <p className="mb-1">
+                        <span className="font-medium">Common Mood:</span>{' '}
+                        <span className="capitalize">{analysis.mostCommonMood}</span>
+                      </p>
+                    )}
+                    <p className="mb-2">
+                      <span className="font-medium">Sentiment:</span>{' '}
+                      {analysis.averageSentiment > 0.1 ? '😊 Positive' : 
+                       analysis.averageSentiment < -0.1 ? '😕 Challenging' : '😐 Neutral'}
+                    </p>
+                    <p className="text-purple-800 dark:text-purple-200 font-medium">
+                      {analysis.suggestion}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>
