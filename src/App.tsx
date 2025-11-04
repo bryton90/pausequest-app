@@ -1,11 +1,14 @@
 import React from 'react';
 import AppRouter from './AppRouter';
 import { AuthProvider } from './contexts/AuthContext';
+import { SettingsProvider } from './contexts/SettingsContext';
 
 const App: React.FC = () => {
   return (
     <AuthProvider>
-      <AppRouter />
+      <SettingsProvider>
+        <AppRouter />
+      </SettingsProvider>
     </AuthProvider>
   );
 };
