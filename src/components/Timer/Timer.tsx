@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { RocketAnimation } from '../RocketAnimation/RocketAnimation';
 
 interface TimerProps {
   timeLeft: number;
@@ -26,10 +27,20 @@ export const Timer: React.FC<TimerProps> = ({
   totalTime,
   animationType,
 }) => {
+  const [showAnimation, setShowAnimation] = useState(false);
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
   const progressPercentage = (timeLeft / totalTime) * 100;
   const elapsed = totalTime - timeLeft;
+
+  // Handle animation when timer reaches zero or is reset
+  useEffect(() => {
+    if (timeLeft === 0) {
+      setShowAnimation(true);
+    } else if (timeLeft === totalTime) {
+      setShowAnimation(false);
+    }
+  }, [timeLeft, totalTime]);
 
   // Data for circular progress (dual ring visualization would be too complex, using single ring)
   const chartData = [
@@ -39,36 +50,48 @@ export const Timer: React.FC<TimerProps> = ({
 
   return (
     <div className="flex flex-col items-center gap-8">
-      {/* Circular Timer */}
-      <div className="relative w-64 h-64">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={chartData}
-              cx="50%"
-              cy="50%"
-              startAngle={-90}
-              endAngle={-90 + (progressPercentage / 100) * 360}
-              innerRadius={80}
-              outerRadius={95}
-              cornerRadius={10}
-              dataKey="value"
-            >
-              {chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
-              ))}
-            </Pie>
-          </PieChart>
-        </ResponsiveContainer>
-        
-        {/* Time Display */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-5xl font-bold text-primary">
-            {minutes.toString().padStart(2, '0')}:
-            {seconds.toString().padStart(2, '0')}
+      {/* Animation or Timer Display */}
+      {showAnimation ? (
+        <div className="w-64 h-64 flex items-center justify-center">
+          {animationType === 'rocket' || animationType === 'both' ? (
+            <RocketAnimation 
+              percentage={progressPercentage} 
+              isRunning={isRunning} 
+            />
+          ) : (
+            <div className="text-2xl text-center">Great job! 🎉</div>
+          )}
+        </div>
+      ) : (
+        <div className="relative w-64 h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={chartData}
+                cx="50%"
+                cy="50%"
+                startAngle={-90}
+                endAngle={-90 + (progressPercentage / 100) * 360}
+                innerRadius={80}
+                outerRadius={95}
+                cornerRadius={10}
+                dataKey="value"
+              >
+                {chartData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+            </PieChart>
+          </ResponsiveContainer>
+          {/* Time Display */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-5xl font-bold text-primary">
+              {minutes.toString().padStart(2, '0')}:
+              {seconds.toString().padStart(2, '0')}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Control Buttons */}
       <div className="flex gap-4">

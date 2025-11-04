@@ -128,6 +128,9 @@ const App: React.FC = () => {
       
       // Reset everything after saving
       resetTimer();
+      setIsBreakTime(false);
+      setSelectedMood(null);
+      setNotes('');
     } catch (error) {
       console.error('Failed to save session:', error);
       alert('Failed to save session. Please try again.');
