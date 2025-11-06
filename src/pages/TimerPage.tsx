@@ -1,9 +1,10 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTimer } from '../hooks/useTimer';
-import TimerVisualization from '../components/TimerVisualization';
-import { useSettings } from '../contexts/SettingsContext';
+import { useSettings, TimerVisualization } from '../contexts/SettingsContext';
 import { useGamification } from '../contexts/GamificationContext';
+import { useSmartScheduler } from '../contexts/SmartSchedulerContext';
+import UpcomingBreaks from '../components/UpcomingBreaks';
 import { analyzePatterns } from '../services/aiService';
 import { MoodTracker } from '../components/MoodTracker/MoodTracker';
 import GamificationStats from '../components/GamificationStats';
@@ -20,6 +21,13 @@ const TimerPage: React.FC = () => {
   const { user } = useAuth();
   const { timerVisualization, showMoodAvatars } = useSettings();
   const { addXp, checkForAchievements } = useGamification();
+  const { 
+    upcomingBreaks, 
+    isBreakTime, 
+    currentBreak, 
+    completeWorkSession: completeSchedulerWorkSession,
+    completeBreak: completeSchedulerBreak
+  } = useSmartScheduler();
   const [isRunning, setIsRunning] = useState(false);
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [moodEmoji, setMoodEmoji] = useState<string>('');
@@ -35,7 +43,7 @@ const TimerPage: React.FC = () => {
   } | null>(null);
   
   // Default to 25 minutes if no user preferences are set
-  const workDuration = user?.preferences?.workDuration || 25 * 60;
+  const workDuration = (user?.preferences as any)?.workDuration || 25 * 60;
   
   const {
     timeLeft,
@@ -57,19 +65,30 @@ const TimerPage: React.FC = () => {
     
     // Add XP for starting a session
     addXp(10, 'session_started');
-  }, [startTimer, addXp]);
+    
+    // Notify scheduler about work session start
+    if (!isBreakTime) {
+      completeSchedulerWorkSession();
+    }
+  }, [startTimer, addXp, isBreakTime, completeSchedulerWorkSession]);
 
   const handleStop = useCallback(() => {
     stopTimer();
     setIsRunning(false);
     
-    // Add XP for completing a session
-    const sessionXp = Math.floor((workDuration - timeLeft) / 60) * 2; // 2 XP per minute
-    addXp(sessionXp, 'session_completed');
-    
-    // Check for session-related achievements
-    checkForAchievements('session');
-  }, [stopTimer, workDuration, timeLeft, addXp, checkForAchievements]);
+    if (isBreakTime && currentBreak) {
+      // Complete the break
+      completeSchedulerBreak();
+      // Add XP for completing a break
+      addXp(5, 'break_completed');
+    } else {
+      // Add XP for completing a work session
+      const sessionXp = Math.floor((workDuration - timeLeft) / 60) * 2; // 2 XP per minute
+      addXp(sessionXp, 'session_completed');
+      // Check for session-related achievements
+      checkForAchievements('session');
+    }
+  }, [stopTimer, workDuration, timeLeft, addXp, checkForAchievements, isBreakTime, currentBreak, completeSchedulerBreak]);
 
   const handleReset = useCallback(() => {
     resetTimer(workDuration);
@@ -155,6 +174,39 @@ const TimerPage: React.FC = () => {
     return MOODS.find(mood => mood.emoji === selectedMood) || null;
   }, [selectedMood]);
 
+  // Show break time UI if in break mode
+  if (isBreakTime && currentBreak) {
+    return (
+      <div className="min-h-screen bg-blue-50 dark:bg-blue-900/20 p-4 relative">
+        <div className="max-w-md mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+          <div className="p-6 bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-center">
+            <h1 className="text-2xl font-bold">Break Time!</h1>
+            <p className="mt-2 opacity-90">{currentBreak.description}</p>
+          </div>
+          
+          <div className="p-6 text-center">
+            <div className="text-6xl font-bold text-blue-600 dark:text-blue-400 my-8">
+              {Math.floor(currentBreak.duration / 60).toString().padStart(2, '0')}:
+              {(currentBreak.duration % 60).toString().padStart(2, '0')}
+            </div>
+            
+            <button
+              onClick={handleStop}
+              className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-full transition-colors"
+            >
+              End Break
+            </button>
+            
+            <div className="mt-6 text-sm text-gray-500 dark:text-gray-400">
+              <p>Take a moment to relax and recharge.</p>
+              <p className="mt-1">You've earned this break!</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 relative">
       <div className="max-w-md mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
@@ -215,6 +267,13 @@ const TimerPage: React.FC = () => {
           
           {/* Gamification Stats */}
           <GamificationStats />
+          
+          {/* Upcoming Breaks */}
+          {upcomingBreaks.length > 0 && (
+            <div className="mb-6">
+              <UpcomingBreaks />
+            </div>
+          )}
           
           {/* Mood Tracking Section */}
           <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
