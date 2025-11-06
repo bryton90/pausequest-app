@@ -1,7 +1,9 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTimer } from '../hooks/useTimer';
-import { useSettings, TimerVisualization } from '../contexts/SettingsContext';
+import { useSettings } from '../contexts/SettingsContext';
+
+type TimerVisualization = 'battery' | 'rocket' | 'coffee' | 'circle' | 'bar' | 'digital';
 import { useGamification } from '../contexts/GamificationContext';
 import { useSmartScheduler } from '../contexts/SmartSchedulerContext';
 import UpcomingBreaks from '../components/UpcomingBreaks';
@@ -19,7 +21,22 @@ const MOODS = [
 
 const TimerPage: React.FC = () => {
   const { user } = useAuth();
-  const { timerVisualization, showMoodAvatars } = useSettings();
+  const { 
+    timerVisualization, 
+    showMoodAvatars,
+    setTimerVisualization,
+    toggleMoodAvatars,
+    enableVisualEffects,
+    toggleVisualEffects
+  } = useSettings();
+  
+  const [currentVisualization, setCurrentVisualization] = useState<TimerVisualization>(
+    timerVisualization as TimerVisualization
+  );
+  
+  useEffect(() => {
+    setCurrentVisualization(timerVisualization as TimerVisualization);
+  }, [timerVisualization]);
   const { addXp, checkForAchievements } = useGamification();
   const { 
     upcomingBreaks, 
@@ -72,7 +89,7 @@ const TimerPage: React.FC = () => {
     }
   }, [startTimer, addXp, isBreakTime, completeSchedulerWorkSession]);
 
-  const handleStop = useCallback(() => {
+  const handlePause = useCallback(() => {
     stopTimer();
     setIsRunning(false);
     
@@ -191,7 +208,7 @@ const TimerPage: React.FC = () => {
             </div>
             
             <button
-              onClick={handleStop}
+              onClick={handlePause}
               className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-full transition-colors"
             >
               End Break
@@ -206,6 +223,14 @@ const TimerPage: React.FC = () => {
       </div>
     );
   }
+
+  // Add handleStop function
+  const handleStop = useCallback(() => {
+    stopTimer();
+    setIsRunning(false);
+    completeSchedulerBreak();
+    addXp(5, 'break_completed');
+  }, [stopTimer, completeSchedulerBreak, addXp]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 relative">
@@ -225,22 +250,13 @@ const TimerPage: React.FC = () => {
           </button>
         </div>
         
-        {/* Timer Section */}
         <div className="p-6">
-          <div className="text-center mb-6">
-            <div className="flex flex-col items-center justify-center">
-              <TimerVisualization 
-                type={timerVisualization} 
-                progress={progress} 
-                size={200} 
-                className="mb-4"
-              />
-              <h2 className="text-4xl font-bold text-gray-800 dark:text-white">
-                {Math.floor(timeLeft / 60).toString().padStart(2, '0')}:
-                {(timeLeft % 60).toString().padStart(2, '0')}
-              </h2>
+          <div className="text-center mb-8">
+            <div className="text-6xl font-bold text-blue-600 dark:text-blue-400">
+              {Math.floor(timeLeft / 60).toString().padStart(2, '0')}:
+              {(timeLeft % 60).toString().padStart(2, '0')}
             </div>
-            <div className="mt-4 flex justify-center space-x-4">
+            <div className="mt-6 space-x-4">
               {!isRunning ? (
                 <button
                   onClick={handleStart}
@@ -250,10 +266,10 @@ const TimerPage: React.FC = () => {
                 </button>
               ) : (
                 <button
-                  onClick={handleStop}
-                  className="px-6 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                  onClick={handlePause}
+                  className="px-6 py-2 bg-yellow-500 text-white rounded-full hover:bg-yellow-600 transition-colors"
                 >
-                  Stop
+                  Pause
                 </button>
               )}
               <button
@@ -266,7 +282,9 @@ const TimerPage: React.FC = () => {
           </div>
           
           {/* Gamification Stats */}
-          <GamificationStats />
+          <div className="mb-6">
+            <GamificationStats />
+          </div>
           
           {/* Upcoming Breaks */}
           {upcomingBreaks.length > 0 && (
