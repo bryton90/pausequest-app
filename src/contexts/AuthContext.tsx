@@ -1,8 +1,11 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
-type User = {
+export type User = {
   id: string;
   email: string;
+  displayName?: string;
+  photoURL?: string;
+  bio?: string;
   stats?: {
     totalFocusTime?: number;
     sessionsCompleted?: number;
@@ -10,8 +13,13 @@ type User = {
   };
   preferences?: {
     workDuration?: number;
+    theme?: 'light' | 'dark' | 'system';
+    notifications?: {
+      email?: boolean;
+      push?: boolean;
+      breakReminders?: boolean;
+    };
   };
-  // Add other user properties as needed
 };
 
 type AuthContextType = {
@@ -19,6 +27,7 @@ type AuthContextType = {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  updateProfile: (updates: Partial<User>) => Promise<void>;
   loading: boolean;
 };
 
@@ -46,9 +55,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const updateProfile = async (updates: Partial<User>) => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      // TODO: Implement your profile update API call
+      // await userApi.updateProfile(user.id, updates);
+      
+      // Update local state
+      setUser({ ...user, ...updates });
+    } catch (error) {
+      console.error('Failed to update profile:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = () => {
     // TODO: Implement your logout logic here
     setUser(null);
+    // Clear any user data from localStorage/sessionStorage if needed
   };
 
   return (
@@ -58,6 +86,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isAuthenticated: !!user,
         login,
         logout,
+        updateProfile,
         loading
       }}
     >

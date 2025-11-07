@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useSettings, TimerVisualization } from '../contexts/SettingsContext';
+import { useSettings } from '../contexts/SettingsContext';
 import SmartSchedulerSettings from './SmartSchedulerSettings';
+
+type TimerVisualization = 'default' | 'battery' | 'rocket' | 'coffee' | 'circle' | 'bar' | 'digital';
+
+interface LocalSettings {
+  timerVisualization: TimerVisualization;
+  showMoodAvatars: boolean;
+  enableVisualEffects: boolean;
+}
 
 interface SettingsPanelProps {
   isOpen: boolean;
@@ -18,8 +26,8 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose }) => {
   } = useSettings();
   
   const [activeTab, setActiveTab] = useState('general');
-  const [localSettings, setLocalSettings] = useState({
-    timerVisualization,
+  const [localSettings, setLocalSettings] = useState<LocalSettings>({
+    timerVisualization: timerVisualization as TimerVisualization,
     showMoodAvatars,
     enableVisualEffects
   });
@@ -39,18 +47,27 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose }) => {
     { id: 'battery', label: 'Battery', emoji: '🔋' },
     { id: 'rocket', label: 'Rocket', emoji: '🚀' },
     { id: 'coffee', label: 'Coffee', emoji: '☕' },
+    { id: 'circle', label: 'Circle', emoji: '⭕' },
+    { id: 'bar', label: 'Progress Bar', emoji: '📊' },
+    { id: 'digital', label: 'Digital', emoji: '🖥️' },
   ];
 
   const handleSave = () => {
+    // Update timer visualization if changed
     if (localSettings.timerVisualization !== timerVisualization) {
       setTimerVisualization(localSettings.timerVisualization);
     }
+    
+    // Toggle mood avatars if changed
     if (localSettings.showMoodAvatars !== showMoodAvatars) {
       toggleMoodAvatars();
     }
+    
+    // Toggle visual effects if changed
     if (localSettings.enableVisualEffects !== enableVisualEffects) {
       toggleVisualEffects();
     }
+    
     onClose();
   };
 
@@ -108,7 +125,10 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ isOpen, onClose }) => {
                     </label>
                     <select
                       value={localSettings.timerVisualization}
-                      onChange={(e) => setLocalSettings({...localSettings, timerVisualization: e.target.value})}
+                      onChange={(e) => setLocalSettings({
+                        ...localSettings, 
+                        timerVisualization: e.target.value as TimerVisualization
+                      })}
                       className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     >
                       <option value="circle">Circle</option>
