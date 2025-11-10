@@ -40,7 +40,9 @@ PauseQuest is a productivity web-app designed to help you manage your work sessi
 ## Usage
 
 1. Open the app in your browser (usually at `http://localhost:5173`).
+   
 2. Start the timer and focus on your task.
+
 3. When the timer ends, log your break activity and mood.
 4. Reset the timer to start a new session.
 
