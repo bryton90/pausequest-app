@@ -7,6 +7,8 @@ interface MoodTrackerProps {
   notes: string;
   onNotesChange: (notes: string) => void;
   onSuggestion?: (suggestion: { type: string; description: string }) => void;
+  
+  showNotes?: boolean;
 }
 
 export const MoodTracker: React.FC<MoodTrackerProps> = ({
@@ -15,6 +17,7 @@ export const MoodTracker: React.FC<MoodTrackerProps> = ({
   notes,
   onNotesChange,
   onSuggestion,
+  showNotes = true,
 }) => {
   const [showSuggestion, setShowSuggestion] = useState(false);
   const [currentMood, setCurrentMood] = useState<MoodEntry | null>(null);
@@ -83,23 +86,25 @@ export const MoodTracker: React.FC<MoodTrackerProps> = ({
       )}
 
       {/* Notes */}
-      <div className="flex flex-col gap-2">
-        <label className="text-lg font-semibold text-foreground tracking-wider">
-          NOTES (OPTIONAL):
-        </label>
-        <textarea
-          value={notes}
-          onChange={(e) => onNotesChange(e.target.value)}
-          placeholder="What's on your mind? Any patterns you're noticing?"
-          className="
-            w-full min-h-[120px] px-4 py-3 rounded-lg
-            border border-border bg-background text-foreground
-            placeholder:text-muted-foreground/60
-            focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
-            resize-none text-sm
-          "
-        />
-      </div>
+      {showNotes && (
+        <div className="flex flex-col gap-2">
+          <label className="text-lg font-semibold text-foreground tracking-wider">
+            NOTES (OPTIONAL):
+          </label>
+          <textarea
+            value={notes}
+            onChange={(e) => onNotesChange(e.target.value)}
+            placeholder="What's on your mind? Any patterns you're noticing?"
+            className="
+              w-full min-h-[120px] px-4 py-3 rounded-lg
+              border border-border bg-background text-foreground
+              placeholder:text-muted-foreground/60
+              focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
+              resize-none text-sm
+            "
+          />
+        </div>
+      )}
     </div>
   );
 };

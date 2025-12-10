@@ -12,6 +12,7 @@ import { MoodTracker } from '../components/MoodTracker/MoodTracker';
 import GamificationStats from '../components/GamificationStats';
 import SettingsPanel from '../components/SettingsPanel';
 import GamificationBanner from '../components/GamificationBanner';
+import TimerPageTabs from '../components/TimerPageTabs';
 import { useTimer } from '../hooks/useTimer';
 
 type TimerVisualization = 'battery' | 'rocket' | 'coffee' | 'circle' | 'bar' | 'digital';
@@ -128,10 +129,26 @@ const TimerPage: React.FC = () => {
 
   const getSessionHistory = useCallback(async (limit: number) => {
     try {
-      const response = await fetch(`/api/sessions?limit=${limit}`);
-      if (!response.ok) throw new Error('Failed to fetch sessions');
+      const response = await fetch(`/api/sessions?limit=${limit}`, {
+        headers: { Accept: 'application/json' },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch sessions: ${response.status}`);
+      }
+
+      // Guard against non-JSON (e.g. an HTML fallback page)
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        console.warn(
+          'getSessionHistory: expected JSON but received',
+          contentType
+        );
+        return [];
+      }
+
       const data = await response.json();
-      return data.sessions || [];
+      return Array.isArray(data.sessions) ? data.sessions : [];
     } catch (error) {
       console.error('Error fetching session history:', error);
       return [];
@@ -262,7 +279,8 @@ const TimerPage: React.FC = () => {
           className="w-full h-full"
         />
       </div>
-      <div className="max-w-md mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+      <div className="md:flex md:gap-8 md:max-w-5xl md:mx-auto">
+        <div className="w-full md:w-2/3 lg:w-3/5 max-w-md mx-auto md:mx-0 bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
         {/* Header */}
         <div className="p-6 bg-gradient-to-r from-emerald-500 to-teal-600 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-white">Mood Follows Actions</h1>
@@ -316,13 +334,13 @@ const TimerPage: React.FC = () => {
           <GamificationBanner />
           {/* Upcoming Breaks */}
           {upcomingBreaks.length > 0 && (
-            <div className="mb-6">
+            <div className="hidden">
               <UpcomingBreaks />
             </div>
           )}
           
           {/* Mood Tracking Section */}
-          <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div className="hidden">
             <MoodTracker 
               selectedMood={selectedMood}
               onMoodChange={handleMoodChange}
@@ -381,7 +399,7 @@ const TimerPage: React.FC = () => {
           </div>
           
           {/* Notes Section */}
-          <div className="mb-4">
+          <div className="hidden">
             <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">Notes</h2>
             <textarea
               className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
@@ -405,6 +423,41 @@ const TimerPage: React.FC = () => {
         </div>
       </div>
       
+      {/* Mobile Secondary Tabs */}
+      <div className="mt-6 md:hidden">
+        <TimerPageTabs
+          includeMoodTracker={true}
+          selectedMood={selectedMood}
+          onMoodChange={handleMoodChange}
+          notes={notes}
+          onNotesChange={setNotes}
+          onSaveNotes={handleSaveNotes}
+        />
+      </div>
+
+      {/* Sidebar (Desktop & Tablet) */}
+      <div className="hidden md:block md:w-1/3 lg:w-2/5 space-y-6">
+        <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <MoodTracker
+            selectedMood={selectedMood}
+            onMoodChange={handleMoodChange}
+            notes={notes}
+            onNotesChange={setNotes}
+            onSuggestion={handleSuggestion}
+            showNotes={false}
+          />
+        </div>
+        <TimerPageTabs
+          includeMoodTracker={false}
+          selectedMood={selectedMood}
+          onMoodChange={handleMoodChange}
+          notes={notes}
+          onNotesChange={setNotes}
+          onSaveNotes={handleSaveNotes}
+        />
+      </div>
+    </div>
+
       <SettingsPanel 
         isOpen={showSettings} 
         onClose={() => setShowSettings(false)} 
