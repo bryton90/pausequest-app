@@ -10,7 +10,7 @@ const TimerPage = lazy(() => import('./pages/TimerPage'));
 const StatsPage = lazy(() => import('./pages/StatsPage'));
 const HistoryPage = lazy(() => import('./pages/HistoryPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
-const UserProfile = lazy(() => import('./components/UserProfile/UserProfile'));
+const UserProfilePage = lazy(() => import('@/pages/UserProfilePage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 const AppRouter: React.FC = () => {
@@ -39,7 +39,7 @@ const AppRouter: React.FC = () => {
                       <Route path="/stats" element={<StatsPage />} />
                       <Route path="/history" element={<HistoryPage />} />
                       <Route path="/settings" element={<SettingsPage />} />
-                      <Route path="/profile" element={<UserProfile />} />
+                      <Route path="/profile" element={<UserProfilePage />} />
                       <Route path="*" element={<NotFoundPage />} />
                     </Routes>
                   </div>

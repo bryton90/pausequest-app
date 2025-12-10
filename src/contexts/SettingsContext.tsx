@@ -69,6 +69,8 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
                   (settings.theme === 'system' && 
                    window.matchMedia('(prefers-color-scheme: dark)').matches);
     
+    // Update HTML attributes/classes based on theme preference
+    root.setAttribute('data-theme', isDark ? 'dark' : 'light');
     if (isDark) {
       root.classList.add('dark');
     } else {

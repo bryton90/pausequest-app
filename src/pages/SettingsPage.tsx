@@ -27,7 +27,7 @@ const SettingsPage: React.FC = () => {
             <label className="block text-sm font-medium text-text-secondary mb-2">
               Theme
             </label>
-            <div className="flex space-x-4">
+            <div className="flex flex-wrap gap-2 sm:space-x-4">
               {[
                 { value: 'light', label: 'Light', icon: <FiSun className="mr-2" /> },
                 { value: 'dark', label: 'Dark', icon: <FiMoon className="mr-2" /> },
