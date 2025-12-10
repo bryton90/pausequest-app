@@ -33,6 +33,8 @@ export interface Session {
   mood_emoji?: string;
   notes?: string;
   timestamp: string;
+  streakCount: number;
+  totalPoints: number;
 }
 
 export interface SessionHistoryResponse {

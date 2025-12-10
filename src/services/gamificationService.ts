@@ -11,6 +11,7 @@ export interface Achievement {
 }
 
 export interface UserStats {
+  streakCount: number;
   totalPoints: number;
   currentStreak: number;
   bestStreak: number;

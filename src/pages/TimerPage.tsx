@@ -1,16 +1,20 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useTimer } from '../hooks/useTimer';
+import { createSession, getSessionHistory as fetchSessionHistory } from '../lib/services/sessionService';
+import { scheduleBreakReminder } from '../lib/services/notificationService';
 import { useSettings } from '../contexts/SettingsContext';
-
-type TimerVisualization = 'battery' | 'rocket' | 'coffee' | 'circle' | 'bar' | 'digital';
 import { useGamification } from '../contexts/GamificationContext';
 import { useSmartScheduler } from '../contexts/SmartSchedulerContext';
+import Visualizer from '../components/Visualizer';
 import UpcomingBreaks from '../components/UpcomingBreaks';
 import { analyzePatterns } from '../services/aiService';
 import { MoodTracker } from '../components/MoodTracker/MoodTracker';
 import GamificationStats from '../components/GamificationStats';
 import SettingsPanel from '../components/SettingsPanel';
+import GamificationBanner from '../components/GamificationBanner';
+import { useTimer } from '../hooks/useTimer';
+
+type TimerVisualization = 'battery' | 'rocket' | 'coffee' | 'circle' | 'bar' | 'digital';
 
 const MOODS = [
   { emoji: '😊', label: 'Happy', color: 'text-yellow-400' },
@@ -20,6 +24,17 @@ const MOODS = [
 ];
 
 const TimerPage: React.FC = () => {
+  // Get current time of day
+  const getTimeOfDay = (): 'morning' | 'afternoon' | 'evening' | 'night' => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return 'morning';
+    if (hour >= 12 && hour < 17) return 'afternoon';
+    if (hour >= 17 && hour < 21) return 'evening';
+    return 'night';
+  };
+  
+  const [timeOfDay] = useState(getTimeOfDay());
+  const [sessionType, setSessionType] = useState<'focus' | 'break'>('focus');
   const { user } = useAuth();
   const { 
     timerVisualization, 
@@ -37,7 +52,7 @@ const TimerPage: React.FC = () => {
   useEffect(() => {
     setCurrentVisualization(timerVisualization as TimerVisualization);
   }, [timerVisualization]);
-  const { addXp, checkForAchievements } = useGamification();
+  const { addXp, checkForAchievements, stats } = useGamification();
   const { 
     upcomingBreaks, 
     isBreakTime, 
@@ -92,20 +107,17 @@ const TimerPage: React.FC = () => {
   const handlePause = useCallback(() => {
     stopTimer();
     setIsRunning(false);
-    
     if (isBreakTime && currentBreak) {
-      // Complete the break
       completeSchedulerBreak();
-      // Add XP for completing a break
+      setSessionType('focus');
       addXp(5, 'break_completed');
     } else {
-      // Add XP for completing a work session
+      setSessionType('break');
       const sessionXp = Math.floor((workDuration - timeLeft) / 60) * 2; // 2 XP per minute
       addXp(sessionXp, 'session_completed');
-      // Check for session-related achievements
       checkForAchievements('session');
     }
-  }, [stopTimer, workDuration, timeLeft, addXp, checkForAchievements, isBreakTime, currentBreak, completeSchedulerBreak]);
+  }, [stopTimer, isBreakTime, currentBreak, completeSchedulerBreak, addXp, workDuration, timeLeft, checkForAchievements]);
 
   const handleReset = useCallback(() => {
     resetTimer(workDuration);
@@ -114,17 +126,26 @@ const TimerPage: React.FC = () => {
     setNotes('');
   }, [resetTimer, workDuration]);
 
-  // Load session history on component mount
+  const getSessionHistory = useCallback(async (limit: number) => {
+    try {
+      const response = await fetch(`/api/sessions?limit=${limit}`);
+      if (!response.ok) throw new Error('Failed to fetch sessions');
+      const data = await response.json();
+      return data.sessions || [];
+    } catch (error) {
+      console.error('Error fetching session history:', error);
+      return [];
+    }
+  }, []);
+
+  // Load sessions on mount
   useEffect(() => {
     const loadSessions = async () => {
       try {
-        const response = await fetch('/api/sessions');
-        if (response.ok) {
-          const data = await response.json();
-          setSessionHistory(data);
-          
-          // Analyze patterns
-          const patternAnalysis = analyzePatterns(data);
+        const sessions = await getSessionHistory(10);
+        setSessionHistory(sessions);
+        if (sessions.length > 0) {
+          const patternAnalysis = analyzePatterns(sessions);
           setAnalysis(patternAnalysis);
         }
       } catch (error) {
@@ -233,7 +254,14 @@ const TimerPage: React.FC = () => {
   }, [stopTimer, completeSchedulerBreak, addXp]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 relative">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 relative overflow-hidden">
+      <div className="absolute inset-0 -z-10 opacity-20">
+        <Visualizer 
+          timeOfDay={timeOfDay} 
+          sessionType={sessionType}
+          className="w-full h-full"
+        />
+      </div>
       <div className="max-w-md mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
         {/* Header */}
         <div className="p-6 bg-gradient-to-r from-emerald-500 to-teal-600 flex justify-between items-center">
@@ -285,7 +313,7 @@ const TimerPage: React.FC = () => {
           <div className="mb-6">
             <GamificationStats />
           </div>
-          
+          <GamificationBanner />
           {/* Upcoming Breaks */}
           {upcomingBreaks.length > 0 && (
             <div className="mb-6">
