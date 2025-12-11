@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import UserProfile from '../components/UserProfile/UserProfile';
 import { useAuth } from '../contexts/AuthContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { FiClock, FiTrendingUp, FiAward, FiBell, FiSettings } from 'react-icons/fi';
+import { ROUTES } from '../config/routes';
 
 interface UserStats {
   totalFocusHours: number;
@@ -12,10 +14,12 @@ interface UserStats {
 }
 
 const UserProfilePage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const { notifications } = useSettings();
+  const navigate = useNavigate();
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -47,10 +51,29 @@ const UserProfilePage: React.FC = () => {
     fetchStats();
   }, [user]);
 
-  if (!user) {
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated && initialLoad) {
+      navigate(ROUTES.LOGIN, { replace: true, state: { from: '/profile' } });
+    }
+    setInitialLoad(false);
+  }, [isAuthenticated, authLoading, initialLoad, navigate]);
+
+  // Show loading state while checking auth status
+  if (authLoading || initialLoad) {
     return (
-      <div className="text-center mt-12 text-text-secondary">You must be logged in to view this page.</div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-text-secondary">Loading your profile...</p>
+        </div>
+      </div>
     );
+  }
+
+  // If not authenticated (and not loading), don't render anything as we'll redirect
+  if (!isAuthenticated) {
+    return null;
   }
 
   return (
@@ -121,11 +144,11 @@ const UserProfilePage: React.FC = () => {
             <h3 className="text-lg font-medium mb-2 text-text-primary">Session Defaults</h3>
             <p className="flex justify-between text-sm text-text-secondary py-1">
               <span>Focus Length</span>
-              <span className="font-semibold">{(user.preferences?.workDuration ?? 1500) / 60} min</span>
+              <span className="font-semibold">{(user?.preferences?.workDuration ?? 1500) / 60} min</span>
             </p>
             <p className="flex justify-between text-sm text-text-secondary py-1">
               <span>Break Length</span>
-              <span className="font-semibold">{((user.preferences as any)?.breakDuration ?? 300) / 60} min</span>
+              <span className="font-semibold">{((user?.preferences as any)?.breakDuration ?? 300) / 60} min</span>
             </p>
           </div>
         </div>
