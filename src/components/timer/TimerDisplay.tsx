@@ -1,4 +1,5 @@
 import React, { memo, useMemo, useRef, useEffect, useCallback } from 'react';
+import { useSettings } from '../../contexts/SettingsContext';
 
 export type TimerVisualization = 'battery' | 'rocket' | 'coffee' | 'circle' | 'bar' | 'digital';
 
@@ -71,11 +72,14 @@ const TimerDisplay: React.FC<TimerDisplayProps> = memo(({
     };
   }, [animateProgress]);
 
+  const { isDarkMode } = useSettings();
+  const textColorClass = isDarkMode ? 'text-white' : 'text-gray-900';
+
   const renderVisualization = () => {
     switch (visualization) {
       case 'digital':
         return (
-          <div className="text-6xl font-mono font-bold">
+          <div className={`text-6xl font-mono font-bold ${textColorClass}`}>
             {timeString}
           </div>
         );
@@ -111,7 +115,7 @@ const TimerDisplay: React.FC<TimerDisplayProps> = memo(({
                 x="50"
                 y="55"
                 textAnchor="middle"
-                className="text-2xl font-bold"
+                className={`text-2xl font-bold ${textColorClass}`}
               >
                 {timeString}
               </text>
