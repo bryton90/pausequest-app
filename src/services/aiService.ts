@@ -49,7 +49,11 @@ export const getBreakSuggestion = (mood: string) => {
   return suggestions[Math.floor(Math.random() * suggestions.length)];
 };
 
-export const analyzePatterns = (sessions: any[]) => {
+export const analyzePatterns = (sessions: any[]): {
+  mostCommonMood: string | null;
+  averageSentiment: number;
+  suggestion: string;
+} | null => {
   if (sessions.length === 0) return null;
   
   const moodCounts: Record<string, number> = {};
@@ -64,8 +68,8 @@ export const analyzePatterns = (sessions: any[]) => {
     }
   });
   
-  const mostCommonMood = Object.entries(moodCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
-  const averageSentiment = totalScore / sessions.length;
+  const mostCommonMood = Object.entries(moodCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+  const averageSentiment = sessions.length > 0 ? totalScore / sessions.length : 0;
   
   return {
     mostCommonMood,
@@ -74,7 +78,8 @@ export const analyzePatterns = (sessions: any[]) => {
   };
 };
 
-const getMoodBasedSuggestion = (mood: string | undefined, sentiment: number) => {
+
+const getMoodBasedSuggestion = (mood: string | undefined | null, sentiment: number) => {
   if (!mood) return 'Consider taking regular breaks to maintain focus';
   
   const suggestions: Record<string, string> = {

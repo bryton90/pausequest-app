@@ -27,6 +27,7 @@ export interface SessionData {
 
 export interface Session {
   id: number;
+  userId: string;
   date: string;
   focus_duration: number;
   break_duration: number;
@@ -35,6 +36,8 @@ export interface Session {
   timestamp: string;
   streakCount: number;
   totalPoints: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface SessionHistoryResponse {

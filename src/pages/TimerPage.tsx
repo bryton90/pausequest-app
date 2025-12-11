@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useRef, memo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { createSession, getSessionHistory as fetchSessionHistory } from '../lib/services/sessionService';
 import { scheduleBreakReminder } from '../lib/services/notificationService';
@@ -25,6 +25,29 @@ const MOODS = [
   { emoji: '😫', label: 'Tired', color: 'text-red-400' },
 ];
 
+// Memoized MoodButton component to prevent unnecessary re-renders
+const MoodButton = memo(({ emoji, label, color, isSelected, onClick }: { 
+  emoji: string; 
+  label: string; 
+  color: string; 
+  isSelected: boolean; 
+  onClick: () => void;
+}) => (
+  <button
+    onClick={onClick}
+    className={`text-4xl p-4 rounded-full transition-all duration-200 ${color} ${
+      isSelected ? 'ring-4 ring-offset-2 ring-blue-400 scale-110' : 'opacity-70 hover:opacity-100 hover:scale-105'
+    }`}
+    aria-label={`Select ${label} mood`}
+    aria-pressed={isSelected}
+  >
+    {emoji}
+  </button>
+));
+
+MoodButton.displayName = 'MoodButton';
+
+// Main TimerPage component with optimized rendering
 const TimerPage: React.FC = () => {
   // Get current time of day
   const getTimeOfDay = (): 'morning' | 'afternoon' | 'evening' | 'night' => {
@@ -181,6 +204,23 @@ const TimerPage: React.FC = () => {
     loadSessions();
   }, []);
 
+  // Memoize the mood selection handler
+  const handleMoodSelect = useCallback((mood: string, emoji: string) => {
+    setSelectedMood(mood);
+    setMoodEmoji(emoji);
+  }, []);
+
+  // Memoize the notes change handler
+  const handleNotesChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setNotes(e.target.value);
+  }, []);
+
+  // Memoize the settings toggle
+  const toggleSettings = useCallback(() => {
+    setShowSettings(prev => !prev);
+  }, []);
+
+  // Memoize the handleSaveNotes function
   const handleSaveNotes = useCallback(async () => {
     if (!user?.id) return;
     
@@ -238,6 +278,77 @@ const TimerPage: React.FC = () => {
   const currentMood = useMemo(() => {
     return MOODS.find(mood => mood.emoji === selectedMood) || null;
   }, [selectedMood]);
+
+  // Memoize the mood avatars rendering
+  const renderMoodAvatars = useMemo(() => {
+    if (!showMoodAvatars) return null;
+
+    return (
+      <div className="flex justify-center space-x-4 my-4">
+        {MOODS.map(({ emoji, label, color }) => (
+          <MoodButton
+            key={label}
+            emoji={emoji}
+            label={label}
+            color={color}
+            isSelected={selectedMood === label}
+            onClick={() => handleMoodSelect(label, emoji)}
+          />
+        ))}
+      </div>
+    );
+  }, [showMoodAvatars, selectedMood, handleMoodSelect]);
+
+  // Memoize the timer display with optimized progress bar
+  const renderTimer = useMemo(() => {
+    const progress = (timeLeftInSeconds / workDuration) * 100;
+    
+    return (
+      <div className="flex flex-col items-center">
+        <div className="text-6xl font-mono font-bold mb-4" style={{ willChange: 'contents' }}>
+          {formatTime(timeLeftInSeconds * 1000)}
+        </div>
+        <div className="w-full max-w-md bg-gray-200 rounded-full h-4 mb-6 overflow-hidden">
+          <div 
+            className="bg-blue-500 h-4 rounded-full transition-transform duration-300 ease-out origin-left"
+            style={{ 
+              transform: `scaleX(${progress / 100})`,
+              willChange: 'transform',
+              width: '100%' // Full width but scaled down with transform
+            }}
+          />
+        </div>
+      </div>
+    );
+  }, [timeLeftInSeconds, workDuration]);
+
+  // Memoize the notes section
+  const renderNotesSection = useMemo(() => {
+    return (
+      <div className="mt-6 w-full max-w-md">
+        <label htmlFor="session-notes" className="block text-sm font-medium text-gray-700 mb-2">
+          Session Notes (Optional)
+        </label>
+        <textarea
+          id="session-notes"
+          rows={3}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          placeholder="How was your session?"
+          value={notes}
+          onChange={handleNotesChange}
+        />
+        <div className="mt-2 flex justify-end">
+          <button
+            onClick={handleSaveNotes}
+            disabled={!notes.trim()}
+            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Save Notes
+          </button>
+        </div>
+      </div>
+    );
+  }, [notes, handleNotesChange, handleSaveNotes]);
 
   // Show break time UI if in break mode
   if (isBreakTime && currentBreak) {
@@ -307,10 +418,7 @@ const TimerPage: React.FC = () => {
         
         <div className="p-6">
           <div className="text-center mb-8">
-            <div className="text-6xl font-bold text-blue-600 dark:text-blue-400">
-              {Math.floor(timeLeftInSeconds / 60).toString().padStart(2, '0')}:
-              {(timeLeftInSeconds % 60).toString().padStart(2, '0')}
-            </div>
+            {renderTimer}
             <div className="mt-6 space-x-4">
               {!isRunning ? (
                 <button
@@ -409,25 +517,7 @@ const TimerPage: React.FC = () => {
           
           {/* Notes Section */}
           <div className="hidden">
-            <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">Notes</h2>
-            <textarea
-              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-              rows={4}
-              placeholder="Add notes about your focus session..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-            />
-            <button
-              onClick={handleSaveNotes}
-              disabled={!notes.trim()}
-              className={`w-full mt-3 py-2 px-4 rounded-lg font-medium transition-colors ${
-                notes.trim() 
-                  ? 'bg-blue-500 text-white hover:bg-blue-600' 
-                  : 'bg-gray-200 text-gray-500 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400'
-              }`}
-            >
-              Save Notes
-            </button>
+            {renderNotesSection}
           </div>
         </div>
       </div>

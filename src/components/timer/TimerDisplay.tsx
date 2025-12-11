@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from 'react';
+import React, { memo, useMemo, useRef, useEffect, useCallback } from 'react';
 
 export type TimerVisualization = 'battery' | 'rocket' | 'coffee' | 'circle' | 'bar' | 'digital';
 
@@ -20,12 +20,56 @@ const TimerDisplay: React.FC<TimerDisplayProps> = memo(({
   visualization,
   className = ''
 }) => {
+  const requestRef = useRef<number>();
+  const progressCircleRef = useRef<SVGCircleElement>(null);
+  const prevTimeRef = useRef<number>();
+  const progressRef = useRef<number>(0);
+  
   const timeString = useMemo(() => formatTime(remainingMs), [remainingMs]);
-  const progress = useMemo(() => {
-    // Assuming max duration is 60 minutes for progress calculation
-    const maxMs = 60 * 60 * 1000;
+  
+  const maxMs = 60 * 60 * 1000; // Max duration of 60 minutes
+  const targetProgress = useMemo(() => {
     return Math.min(100, (1 - (remainingMs / maxMs)) * 100);
-  }, [remainingMs]);
+  }, [remainingMs, maxMs]);
+  
+  const animateProgress = useCallback((timestamp: number) => {
+    if (!prevTimeRef.current) {
+      prevTimeRef.current = timestamp;
+    }
+    
+    const deltaTime = timestamp - prevTimeRef.current;
+    prevTimeRef.current = timestamp;
+    
+    // Smoothly interpolate progress
+    progressRef.current += (targetProgress - progressRef.current) * (1 - Math.exp(-0.02 * deltaTime));
+    
+    // Update the circle's stroke-dashoffset using transform for better performance
+    if (progressCircleRef.current) {
+      const circumference = 2 * Math.PI * 45; // 2*PI*r where r=45
+      const offset = circumference - (progressRef.current / 100) * circumference;
+      progressCircleRef.current.style.transform = `rotate(-90deg) scaleX(${progressRef.current / 100})`;
+      progressCircleRef.current.style.transformOrigin = 'center';
+      progressCircleRef.current.style.transition = 'transform 0.1s linear';
+    }
+    
+    // Continue the animation if not at target
+    if (Math.abs(progressRef.current - targetProgress) > 0.1) {
+      requestRef.current = requestAnimationFrame(animateProgress);
+    } else {
+      progressRef.current = targetProgress;
+    }
+  }, [targetProgress]);
+  
+  useEffect(() => {
+    // Start the animation when the component mounts or targetProgress changes
+    requestRef.current = requestAnimationFrame(animateProgress);
+    
+    return () => {
+      if (requestRef.current) {
+        cancelAnimationFrame(requestRef.current);
+      }
+    };
+  }, [animateProgress]);
 
   const renderVisualization = () => {
     switch (visualization) {
@@ -48,6 +92,7 @@ const TimerDisplay: React.FC<TimerDisplayProps> = memo(({
                 strokeWidth="8"
               />
               <circle
+                ref={progressCircleRef}
                 cx="50"
                 cy="50"
                 r="45"
@@ -55,9 +100,12 @@ const TimerDisplay: React.FC<TimerDisplayProps> = memo(({
                 stroke="#3b82f6"
                 strokeWidth="8"
                 strokeDasharray="283"
-                strokeDashoffset={283 - (progress * 2.83)}
-                transform="rotate(-90 50 50)"
-                className="transition-all duration-200"
+                strokeDashoffset="0"
+                className="origin-center"
+                style={{
+                  willChange: 'transform',
+                  transform: 'rotate(-90deg) scaleX(0)'
+                }}
               />
               <text
                 x="50"
@@ -81,9 +129,16 @@ const TimerDisplay: React.FC<TimerDisplayProps> = memo(({
   };
 
   return (
-    <div className={`flex flex-col items-center justify-center ${className}`}>
+    <div className={`flex flex-col items-center justify-center ${className}`} style={{ willChange: 'contents' }}>
       {renderVisualization()}
     </div>
+  );
+}, (prevProps, nextProps) => {
+  // Only re-render if remainingMs changes by more than 1000ms (1 second)
+  // or if visualization changes
+  return (
+    Math.abs(prevProps.remainingMs - nextProps.remainingMs) < 1000 &&
+    prevProps.visualization === nextProps.visualization
   );
 });
 
