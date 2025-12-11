@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { createSession, getSessionHistory as fetchSessionHistory } from '../lib/services/sessionService';
 import { scheduleBreakReminder } from '../lib/services/notificationService';
@@ -37,6 +37,18 @@ const TimerPage: React.FC = () => {
   
   const [timeOfDay] = useState(getTimeOfDay());
   const [sessionType, setSessionType] = useState<'focus' | 'break'>('focus');
+  const [selectedMood, setSelectedMood] = useState<string | null>(null);
+  const [moodEmoji, setMoodEmoji] = useState<string>('');
+  const [notes, setNotes] = useState('');
+  const [showSettings, setShowSettings] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState<{type: string; description: string} | null>(null);
+  const [sessionHistory, setSessionHistory] = useState<any[]>([]);
+  const [showAnalysis, setShowAnalysis] = useState(false);
+  const [analysis, setAnalysis] = useState<{
+    mostCommonMood: string | null;
+    averageSentiment: number;
+    suggestion: string;
+  } | null>(null);
   const { user } = useAuth();
   const { 
     timerVisualization, 
@@ -62,26 +74,12 @@ const TimerPage: React.FC = () => {
     completeWorkSession: completeSchedulerWorkSession,
     completeBreak: completeSchedulerBreak
   } = useSmartScheduler();
-  const [isRunning, setIsRunning] = useState(false);
-  const [selectedMood, setSelectedMood] = useState<string | null>(null);
-  const [moodEmoji, setMoodEmoji] = useState<string>('');
-  const [notes, setNotes] = useState('');
-  const [showSettings, setShowSettings] = useState(false);
-  const [aiSuggestion, setAiSuggestion] = useState<{type: string; description: string} | null>(null);
-  const [sessionHistory, setSessionHistory] = useState<any[]>([]);
-  const [showAnalysis, setShowAnalysis] = useState(false);
-  const [analysis, setAnalysis] = useState<{
-    mostCommonMood: string | null;
-    averageSentiment: number;
-    suggestion: string;
-  } | null>(null);
-  
   // Default to 25 minutes if no user preferences are set
   const workDuration = (user?.preferences as any)?.workDuration || 25 * 60;
   
   const {
     timeLeft,
-    isRunning: timerRunning,
+    isRunning,
     startTimer,
     stopTimer,
     resetTimer,
@@ -119,13 +117,12 @@ const TimerPage: React.FC = () => {
   }, [user?.preferences?.workDuration, isRunning, resetTimer, setTimerTime]);
   
   // Convert milliseconds back to seconds for display
+  // Convert milliseconds back to seconds for display
   const timeLeftInSeconds = Math.ceil(timeLeft / 1000);
 
   const handleStart = useCallback(() => {
     if (!isRunning) {
       startTimer();
-      setIsRunning(true);
-      
       // Add XP for starting a session
       addXp(10, 'session_started');
       
@@ -139,7 +136,6 @@ const TimerPage: React.FC = () => {
   const handlePause = useCallback(() => {
     if (isRunning) {
       stopTimer();
-      setIsRunning(false);
       
       if (isBreakTime && currentBreak) {
         completeSchedulerBreak();
@@ -147,7 +143,7 @@ const TimerPage: React.FC = () => {
         addXp(5, 'break_completed');
       } else {
         setSessionType('break');
-        const elapsedMinutes = Math.ceil((workDuration * 1000 - timeLeft) / 60000);
+        const elapsedMinutes = Math.ceil((workDuration - timeLeftInSeconds) / 60);
         const sessionXp = elapsedMinutes * 2; // 2 XP per minute
         addXp(sessionXp, 'session_completed');
         
@@ -158,50 +154,20 @@ const TimerPage: React.FC = () => {
         checkForAchievements('session');
       }
     }
-  }, [stopTimer, isRunning, isBreakTime, currentBreak, completeSchedulerBreak, 
-      addXp, workDuration, timeLeft, user?.id, checkForAchievements]);
+  }, [stopTimer, isRunning, isBreakTime, currentBreak, completeSchedulerBreak, addXp, workDuration, timeLeftInSeconds, user?.id, checkForAchievements]);
 
   const handleReset = useCallback(() => {
     resetTimer(workDuration * 1000); // Convert to milliseconds
-    setIsRunning(false);
     setSelectedMood(null);
     setNotes('');
     setSessionType('focus');
   }, [resetTimer, workDuration]);
 
-  const getSessionHistory = useCallback(async (limit: number) => {
-    try {
-      const response = await fetch(`/api/sessions?limit=${limit}`, {
-        headers: { Accept: 'application/json' },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch sessions: ${response.status}`);
-      }
-
-      // Guard against non-JSON (e.g. an HTML fallback page)
-      const contentType = response.headers.get('content-type') || '';
-      if (!contentType.includes('application/json')) {
-        console.warn(
-          'getSessionHistory: expected JSON but received',
-          contentType
-        );
-        return [];
-      }
-
-      const data = await response.json();
-      return Array.isArray(data.sessions) ? data.sessions : [];
-    } catch (error) {
-      console.error('Error fetching session history:', error);
-      return [];
-    }
-  }, []);
-
   // Load sessions on mount
   useEffect(() => {
     const loadSessions = async () => {
       try {
-        const sessions = await getSessionHistory(10);
+        const { sessions } = await fetchSessionHistory(10);
         setSessionHistory(sessions);
         if (sessions.length > 0) {
           const patternAnalysis = analyzePatterns(sessions);
@@ -216,6 +182,8 @@ const TimerPage: React.FC = () => {
   }, []);
 
   const handleSaveNotes = useCallback(async () => {
+    if (!user?.id) return;
+    
     try {
       const response = await fetch('/api/sessions', {
         method: 'POST',
@@ -224,7 +192,7 @@ const TimerPage: React.FC = () => {
           mood: selectedMood,
           mood_emoji: moodEmoji,
           notes,
-          focus_duration: workDuration - timeLeft,
+          focus_duration: workDuration - timeLeftInSeconds,
           break_duration: 0, // This would be updated when the break is taken
         }),
       });
@@ -249,9 +217,9 @@ const TimerPage: React.FC = () => {
     } catch (error) {
       console.error('Failed to save session:', error);
     }
-  }, [notes, selectedMood, moodEmoji, sessionHistory, workDuration, timeLeft, addXp, checkForAchievements]);
+  }, [notes, selectedMood, moodEmoji, sessionHistory, workDuration, timeLeftInSeconds, addXp, checkForAchievements]);
 
-  const progress = 1 - timeLeft / workDuration;
+  const progress = (workDuration - timeLeftInSeconds) / workDuration;
   const handleMoodChange = useCallback((mood: string, emoji: string) => {
     setSelectedMood(mood === selectedMood ? null : mood);
     setMoodEmoji(emoji);
@@ -307,7 +275,6 @@ const TimerPage: React.FC = () => {
   // Add handleStop function
   const handleStop = useCallback(() => {
     stopTimer();
-    setIsRunning(false);
     completeSchedulerBreak();
     addXp(5, 'break_completed');
   }, [stopTimer, completeSchedulerBreak, addXp]);
@@ -341,8 +308,8 @@ const TimerPage: React.FC = () => {
         <div className="p-6">
           <div className="text-center mb-8">
             <div className="text-6xl font-bold text-blue-600 dark:text-blue-400">
-              {Math.floor(timeLeft / 60).toString().padStart(2, '0')}:
-              {(timeLeft % 60).toString().padStart(2, '0')}
+              {Math.floor(timeLeftInSeconds / 60).toString().padStart(2, '0')}:
+              {(timeLeftInSeconds % 60).toString().padStart(2, '0')}
             </div>
             <div className="mt-6 space-x-4">
               {!isRunning ? (
