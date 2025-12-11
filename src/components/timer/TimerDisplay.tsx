@@ -20,9 +20,9 @@ const TimerDisplay: React.FC<TimerDisplayProps> = memo(({
   visualization,
   className = ''
 }) => {
-  const requestRef = useRef<number>();
+  const requestRef = useRef<number>(0);
   const progressCircleRef = useRef<SVGCircleElement>(null);
-  const prevTimeRef = useRef<number>();
+  const prevTimeRef = useRef<number>(0);
   const progressRef = useRef<number>(0);
   
   const timeString = useMemo(() => formatTime(remainingMs), [remainingMs]);

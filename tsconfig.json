@@ -16,9 +16,8 @@
       "@/*": ["./src/*"]
     },
 
-    /* React & Emotion */
+    /* React */
     "jsx": "react-jsx",
-    "jsxImportSource": "@emotion/react",
 
     /* Strict Type-Checking Options */
     "strict": true,

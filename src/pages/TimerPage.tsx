@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect, useMemo, useRef, memo } from '
 import { useAuth } from '../contexts/AuthContext';
 import { createSession, getSessionHistory as fetchSessionHistory } from '../lib/services/sessionService';
 import { scheduleBreakReminder } from '../lib/services/notificationService';
+import { formatTime } from '../utils/timeUtils';
 import { scheduleSmartReminder } from '../lib/actions/smartReminder.action';
 import { useSettings } from '../contexts/SettingsContext';
 import { useGamification } from '../contexts/GamificationContext';
