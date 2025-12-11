@@ -237,3 +237,37 @@ export const analyzeUserSessionPatterns = (historicalData: Session[]): Date => {
 
   return new Date(Date.now() + clampedMinutes * 60 * 1000);
 };
+
+/**
+ * Get user's lifetime statistics
+ */
+export const getUserLifetimeStats = async (userId: string): Promise<{
+  totalFocusHours: number;
+  highestStreak: number;
+  totalPoints: number;
+}> => {
+  const currentUser = getCurrentUser();
+  if (!currentUser) {
+    throw new Error('User not authenticated');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/stats`, {
+    headers: {
+      'Authorization': `Bearer ${currentUser.token}`,
+    },
+  });
+
+  if (!response.ok) {
+    // If the endpoint doesn't exist yet, return mock data
+    if (response.status === 404) {
+      return {
+        totalFocusHours: 0,
+        highestStreak: 0,
+        totalPoints: 0,
+      };
+    }
+    return handleApiError(response);
+  }
+
+  return response.json();
+};

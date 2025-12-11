@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 export type User = {
+  metadata: any;
   id: string;
   email: string;
   displayName?: string;
