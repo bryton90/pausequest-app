@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { createSession, getSessionHistory as fetchSessionHistory } from '../lib/services/sessionService';
 import { scheduleBreakReminder } from '../lib/services/notificationService';
+import { scheduleSmartReminder } from '../lib/actions/smartReminder.action';
 import { useSettings } from '../contexts/SettingsContext';
 import { useGamification } from '../contexts/GamificationContext';
 import { useSmartScheduler } from '../contexts/SmartSchedulerContext';
@@ -116,6 +117,10 @@ const TimerPage: React.FC = () => {
       setSessionType('break');
       const sessionXp = Math.floor((workDuration - timeLeft) / 60) * 2; // 2 XP per minute
       addXp(sessionXp, 'session_completed');
+      // Smart prediction reminder if session was long (>= 45 min)
+      if (user?.id && workDuration / 60 >= 45) {
+        scheduleSmartReminder(user.id).catch(console.error);
+      }
       checkForAchievements('session');
     }
   }, [stopTimer, isBreakTime, currentBreak, completeSchedulerBreak, addXp, workDuration, timeLeft, checkForAchievements]);
