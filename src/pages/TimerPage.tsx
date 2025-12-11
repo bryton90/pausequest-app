@@ -84,52 +84,89 @@ const TimerPage: React.FC = () => {
     isRunning: timerRunning,
     startTimer,
     stopTimer,
-    resetTimer
+    resetTimer,
+    setTime: setTimerTime
   } = useTimer({
-    initialTime: workDuration,
+    initialTime: workDuration * 1000, 
+    tickIntervalMs: 200, 
     onTimeEnd: () => {
       // Play a sound or show a notification when the timer ends
       new Audio('/notification.mp3').play().catch(e => console.error('Error playing sound:', e));
+      
+      // Auto-start break if it's a work session
+      if (!isBreakTime) {
+        const breakDuration = (user?.preferences as any)?.breakDuration || 5 * 60; // 5 minutes default
+        setTimerTime(breakDuration * 1000);
+        setSessionType('break');
+        startTimer();
+      }
+    },
+    onTick: (msLeft) => {
     }
   });
+  
+  // Update work duration when preferences change
+  useEffect(() => {
+    if (user?.preferences?.workDuration) {
+      const newDuration = user.preferences.workDuration * 1000; // Convert to milliseconds
+      if (!isRunning) {
+        resetTimer(newDuration);
+      } else {
+        // If timer is running, update the time without resetting the timer
+        setTimerTime(newDuration);
+      }
+    }
+  }, [user?.preferences?.workDuration, isRunning, resetTimer, setTimerTime]);
+  
+  // Convert milliseconds back to seconds for display
+  const timeLeftInSeconds = Math.ceil(timeLeft / 1000);
 
   const handleStart = useCallback(() => {
-    startTimer();
-    setIsRunning(true);
-    
-    // Add XP for starting a session
-    addXp(10, 'session_started');
-    
-    // Notify scheduler about work session start
-    if (!isBreakTime) {
-      completeSchedulerWorkSession();
+    if (!isRunning) {
+      startTimer();
+      setIsRunning(true);
+      
+      // Add XP for starting a session
+      addXp(10, 'session_started');
+      
+      // Notify scheduler about work session start
+      if (!isBreakTime) {
+        completeSchedulerWorkSession();
+      }
     }
-  }, [startTimer, addXp, isBreakTime, completeSchedulerWorkSession]);
+  }, [startTimer, addXp, isRunning, isBreakTime, completeSchedulerWorkSession]);
 
   const handlePause = useCallback(() => {
-    stopTimer();
-    setIsRunning(false);
-    if (isBreakTime && currentBreak) {
-      completeSchedulerBreak();
-      setSessionType('focus');
-      addXp(5, 'break_completed');
-    } else {
-      setSessionType('break');
-      const sessionXp = Math.floor((workDuration - timeLeft) / 60) * 2; // 2 XP per minute
-      addXp(sessionXp, 'session_completed');
-      // Smart prediction reminder if session was long (>= 45 min)
-      if (user?.id && workDuration / 60 >= 45) {
-        scheduleSmartReminder(user.id).catch(console.error);
+    if (isRunning) {
+      stopTimer();
+      setIsRunning(false);
+      
+      if (isBreakTime && currentBreak) {
+        completeSchedulerBreak();
+        setSessionType('focus');
+        addXp(5, 'break_completed');
+      } else {
+        setSessionType('break');
+        const elapsedMinutes = Math.ceil((workDuration * 1000 - timeLeft) / 60000);
+        const sessionXp = elapsedMinutes * 2; // 2 XP per minute
+        addXp(sessionXp, 'session_completed');
+        
+        // Smart prediction reminder if session was long (>= 45 min)
+        if (user?.id && workDuration >= 45) {
+          scheduleSmartReminder(user.id).catch(console.error);
+        }
+        checkForAchievements('session');
       }
-      checkForAchievements('session');
     }
-  }, [stopTimer, isBreakTime, currentBreak, completeSchedulerBreak, addXp, workDuration, timeLeft, checkForAchievements]);
+  }, [stopTimer, isRunning, isBreakTime, currentBreak, completeSchedulerBreak, 
+      addXp, workDuration, timeLeft, user?.id, checkForAchievements]);
 
   const handleReset = useCallback(() => {
-    resetTimer(workDuration);
+    resetTimer(workDuration * 1000); // Convert to milliseconds
     setIsRunning(false);
     setSelectedMood(null);
     setNotes('');
+    setSessionType('focus');
   }, [resetTimer, workDuration]);
 
   const getSessionHistory = useCallback(async (limit: number) => {
@@ -452,24 +489,28 @@ const TimerPage: React.FC = () => {
             showNotes={false}
           />
         </div>
-        <TimerPageTabs
-          includeMoodTracker={false}
-          selectedMood={selectedMood}
-          onMoodChange={handleMoodChange}
-          notes={notes}
-          onNotesChange={setNotes}
-          onSaveNotes={handleSaveNotes}
-        />
       </div>
     </div>
 
-      <SettingsPanel 
-        isOpen={showSettings} 
-        onClose={() => setShowSettings(false)} 
+    {/* Mobile Secondary Tabs */}
+    <div className="mt-6 md:hidden">
+      <TimerPageTabs
+        includeMoodTracker={true}
+        selectedMood={selectedMood}
+        onMoodChange={handleMoodChange}
+        notes={notes}
+        onNotesChange={setNotes}
+        onSaveNotes={handleSaveNotes}
       />
     </div>
+
+    <SettingsPanel 
+      isOpen={showSettings} 
+      onClose={() => setShowSettings(false)} 
+    />
+  </div>
   );
-};
+}
 
 function getMoodMessage(emoji: string | undefined): string {
   switch (emoji) {
