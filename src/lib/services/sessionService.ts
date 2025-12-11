@@ -2,7 +2,7 @@ import { Session, SessionData, SessionHistoryResponse } from '../../api/breakSer
 import { validateSessionData, validateSessionUpdate, validateSessionId } from '../validations/session.validations';
 import { getCurrentUser } from './authService';
 
-const API_BASE_URL = 'http://127.0.0.1:5000';
+const API_BASE_URL = 'http://127.0.0.1:5000/api';
 
 interface ApiError extends Error {
   status?: number;
@@ -70,7 +70,7 @@ export const getSessionHistory = async (limit: number = 10): Promise<SessionHist
     throw new Error('User not authenticated');
   }
   
-  const response = await fetch(`${API_BASE_URL}/sessions?userId=${currentUser.id}&limit=${limit}`, {
+  const response = await fetch(`${API_BASE_URL}/session-history?limit=${limit}`, {
     headers: {
       'Authorization': `Bearer ${currentUser.token}`,
     },
@@ -193,7 +193,7 @@ export const getSessionStats = async (): Promise<{
   totalBreakTime: number;
   averageSessionLength: number;
 }> => {
-  const response = await fetch(`${API_BASE_URL}/sessions/stats`);
+  const response = await fetch(`${API_BASE_URL}/session/stats`);
   
   if (!response.ok) {
     throw new Error('Failed to fetch session statistics');
@@ -210,7 +210,7 @@ export const getHistoricalSessionData = async (
   userId: string,
   limit: number = 100
 ): Promise<Session[]> => {
-  const response = await fetch(`${API_BASE_URL}/sessions?userId=${userId}&limit=${limit}`);
+  const response = await fetch(`${API_BASE_URL}/session-history?limit=${limit}`);
   if (!response.ok) {
     throw new Error('Failed to fetch historical session data');
   }

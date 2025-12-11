@@ -89,6 +89,7 @@ export const useTimer = ({
 
   const startTimer = useCallback(() => {
     if (!isRunning) {
+      lastTickTimeRef.current = performance.now();
       setIsRunning(true);
     }
   }, [isRunning]);
@@ -98,6 +99,17 @@ export const useTimer = ({
   }, []);
 
   const resetTimer = useCallback((newTime: number = initialTime) => {
+    // Clean up any running animations/intervals
+    if (rafIdRef.current) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
+    }
+    if (tickIntervalRef.current) {
+      clearTimeout(tickIntervalRef.current);
+      tickIntervalRef.current = null;
+    }
+    
+    // Reset state
     setIsRunning(false);
     timeLeftRef.current = newTime;
     setDisplayTime(newTime);

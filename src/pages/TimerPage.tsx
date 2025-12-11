@@ -187,23 +187,28 @@ const TimerPage: React.FC = () => {
     setSessionType('focus');
   }, [resetTimer, workDuration]);
 
-  // Load sessions on mount
+  // Load sessions on mount and when user changes
   useEffect(() => {
     const loadSessions = async () => {
       try {
-        const { sessions } = await fetchSessionHistory(10);
-        setSessionHistory(sessions);
-        if (sessions.length > 0) {
-          const patternAnalysis = analyzePatterns(sessions);
-          setAnalysis(patternAnalysis);
+        // Only attempt to load sessions if user is authenticated
+        if (user) {
+          const { sessions } = await fetchSessionHistory(10);
+          setSessionHistory(sessions);
+          if (sessions.length > 0) {
+            const patternAnalysis = analyzePatterns(sessions);
+            setAnalysis(patternAnalysis);
+          }
         }
-      } catch (error) {
+     } catch (error) {
+      if (error instanceof Error && error.message !== 'User not authenticated') {
         console.error('Failed to load session history:', error);
       }
-    };
+    }
+        };
 
     loadSessions();
-  }, []);
+  }, [user]); 
 
   // Memoize the mood selection handler
   const handleMoodSelect = useCallback((mood: string, emoji: string) => {
@@ -544,22 +549,10 @@ const TimerPage: React.FC = () => {
             notes={notes}
             onNotesChange={setNotes}
             onSuggestion={handleSuggestion}
-            showNotes={false}
+            showNotes={true}
           />
         </div>
       </div>
-    </div>
-
-    {/* Mobile Secondary Tabs */}
-    <div className="mt-6 md:hidden">
-      <TimerPageTabs
-        includeMoodTracker={true}
-        selectedMood={selectedMood}
-        onMoodChange={handleMoodChange}
-        notes={notes}
-        onNotesChange={setNotes}
-        onSaveNotes={handleSaveNotes}
-      />
     </div>
 
     <SettingsPanel 

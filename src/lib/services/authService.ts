@@ -1,7 +1,7 @@
-interface User {
+export interface User {
   id: string;
   email: string;
-  token: string;
+  token?: string;
   preferences?: {
     workDuration?: number;
     breakDuration?: number;
@@ -17,6 +17,8 @@ declare global {
 /**
  * Get the current authenticated user
  */
+const API_URL = 'http://127.0.0.1:5000/api';
+
 export const getCurrentUser = (): User | null => {
   // In a real app, this would check localStorage, cookies, or a context
   // For now, we'll use a simple window property
@@ -70,6 +72,40 @@ export const isAuthenticated = (): boolean => {
 /**
  * Log out the current user
  */
+export const login = async (email: string, password: string): Promise<User> => {
+  const response = await fetch(`${API_URL}/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Login failed');
+  }
+
+  const data = await response.json();
+  const user: User = { id: data.user.id, email: data.user.email, token: data.token };
+  setCurrentUser(user);
+  return user;
+};
+
+export const register = async (email: string, password: string): Promise<void> => {
+  const response = await fetch(`${API_URL}/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Registration failed');
+  }
+};
+
 export const logout = (): void => {
   setCurrentUser(null);
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('user');
+  }
 };

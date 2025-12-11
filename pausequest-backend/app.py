@@ -1,21 +1,30 @@
-from flask_sqlalchemy import SQLAlchemy
+from datetime import date
+
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
-app = Flask(__name__)
-CORS(app) 
+from extensions import db
+from models import User
+from middleware import token_required
 
-# Database configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///breaks.db' 
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app = Flask(__name__)
+CORS(app)
+
+# ---------------------------------------------------------------------------
+# Configuration
+# ---------------------------------------------------------------------------
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///breaks.db"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["SECRET_KEY"] = "change-me-in-prod"  # TODO: move to env var
+
+db.init_app(app)
 
 analyzer = SentimentIntensityAnalyzer()
 
-db = SQLAlchemy(app)
-
 with app.app_context():
     db.create_all()
+
 
 class BreakLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -28,23 +37,27 @@ class BreakLog(db.Model):
         return f'<BreakLog {self.id}: {self.break_type} - Sentiment: {self.sentiment_score}>'
 
 class Session(db.Model):
+    __tablename__ = "sessions"
+
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     date = db.Column(db.Date, nullable=False)
-    focus_duration = db.Column(db.Integer, nullable=False)  # in seconds
-    break_duration = db.Column(db.Integer, nullable=False)  # in seconds
-    mood_emoji = db.Column(db.String(10), nullable=True)
-    notes = db.Column(db.Text, nullable=True)
+    focus_duration = db.Column(db.Integer, nullable=False)  # seconds
+    break_duration = db.Column(db.Integer, nullable=False)  # seconds
+    mood_emoji = db.Column(db.String(10))
+    notes = db.Column(db.Text)
     timestamp = db.Column(db.DateTime, server_default=db.func.now())
 
     def to_dict(self):
         return {
-            'id': self.id,
-            'date': self.date.isoformat() if self.date else None,
-            'focus_duration': self.focus_duration,
-            'break_duration': self.break_duration,
-            'mood_emoji': self.mood_emoji,
-            'notes': self.notes,
-            'timestamp': self.timestamp.isoformat() if self.timestamp else None
+            "id": self.id,
+            "user_id": self.user_id,
+            "date": self.date.isoformat() if self.date else None,
+            "focus_duration": self.focus_duration,
+            "break_duration": self.break_duration,
+            "mood_emoji": self.mood_emoji,
+            "notes": self.notes,
+            "timestamp": self.timestamp.isoformat() if self.timestamp else None,
         }
 
     def __repr__(self):
@@ -53,6 +66,43 @@ class Session(db.Model):
 @app.route('/')
 def home():
     return jsonify({"message": "Welcome to PauseQuest!"})
+
+# ---------------------------------------------------------------------------
+# Authentication routes
+# ---------------------------------------------------------------------------
+
+@app.route('/api/register', methods=['POST'])
+def register():
+    data = request.get_json() or {}
+
+    if not data.get('email') or not data.get('password'):
+        return jsonify({'message': 'Email and password are required'}), 400
+
+    if User.query.filter_by(email=data['email']).first():
+        return jsonify({'message': 'Email already registered'}), 400
+
+    user = User(email=data['email'])
+    user.set_password(data['password'])
+    db.session.add(user)
+    db.session.commit()
+
+    return jsonify({'message': 'User registered successfully'}), 201
+
+
+@app.route('/api/login', methods=['POST'])
+def login():
+    data = request.get_json() or {}
+    user = User.query.filter_by(email=data.get('email')).first()
+
+    if not user or not user.check_password(data.get('password', '')):
+        return jsonify({'message': 'Invalid email or password'}), 401
+
+    token = user.generate_auth_token()
+    return jsonify({'token': token, 'user': {'id': user.id, 'email': user.email}})
+
+# ---------------------------------------------------------------------------
+# Break logging route (public)
+# ---------------------------------------------------------------------------
 
 @app.route('/log-break', methods=['POST'])
 def log_break():
@@ -97,8 +147,9 @@ def log_break():
 
     return jsonify({"message": "Method not allowed"}), 405
 
-@app.route('/session', methods=['POST'])
-def create_session():
+@app.route('/api/session', methods=['POST'])
+@token_required
+def create_session(current_user):
     if request.method == 'POST':
         data = request.json
         
@@ -108,11 +159,12 @@ def create_session():
         from datetime import date
         
         new_session = Session(
+            user_id=current_user.id,
             date=date.today(),
             focus_duration=data.get('focus_duration', 0),
             break_duration=data.get('break_duration', 0),
             mood_emoji=data.get('mood_emoji'),
-            notes=data.get('notes')
+            notes=data.get('notes'),
         )
         db.session.add(new_session)
         db.session.commit()
@@ -126,12 +178,13 @@ def create_session():
 
     return jsonify({"message": "Method not allowed"}), 405
 
-@app.route('/session-history', methods=['GET'])
-def get_session_history():
+@app.route('/api/session-history', methods=['GET'])
+@token_required
+def get_session_history(current_user):
     if request.method == 'GET':
         limit = request.args.get('limit', 10, type=int)
         
-        sessions = Session.query.order_by(Session.date.desc()).limit(limit).all()
+        sessions = Session.query.filter_by(user_id=current_user.id).order_by(Session.date.desc()).limit(limit).all()
         
         sessions_list = [session.to_dict() for session in sessions]
         
