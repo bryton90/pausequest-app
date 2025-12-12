@@ -1,11 +1,10 @@
 import React, { memo, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useSettings } from '../../contexts/SettingsContext';
-
-export type TimerVisualization = 'battery' | 'rocket' | 'coffee' | 'circle' | 'bar' | 'digital';
+import { VisualizationType } from '../../utils/theme';
 
 interface TimerDisplayProps {
   remainingMs: number;
-  visualization: TimerVisualization;
+  visualization: VisualizationType;
   className?: string;
 }
 
@@ -76,57 +75,58 @@ const TimerDisplay: React.FC<TimerDisplayProps> = memo(({
   const textColorClass = isDarkMode ? 'text-white' : 'text-gray-900';
 
   const renderVisualization = () => {
+    const progress = 1 - (remainingMs / maxMs);
+    
     switch (visualization) {
+      case 'rocket':
+        return (
+          <div className="relative w-32 h-32">
+            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2">
+              <div className="relative">
+                <div 
+                  className="absolute bottom-0 left-1/2 transform -translate-x-1/2 bg-gray-200 rounded-t-full"
+                  style={{
+                    width: '80px',
+                    height: `${80 * (1 - progress)}px`,
+                    bottom: '10%',
+                  }}
+                />
+                <div className="text-6xl">🚀</div>
+                <div 
+                  className="absolute bottom-0 left-1/2 transform -translate-x-1/2 bg-orange-500 rounded-full"
+                  style={{
+                    width: '40px',
+                    height: '12px',
+                    bottom: '-5%',
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        );
+      case 'coffee':
+        return (
+          <div className="relative w-32 h-32">
+            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2">
+              <div className="relative">
+                <div 
+                  className="absolute bottom-0 left-1/2 transform -translate-x-1/2 bg-amber-800 rounded-t-lg"
+                  style={{
+                    width: '80px',
+                    height: `${80 * progress}px`,
+                    bottom: '10%',
+                  }}
+                />
+                <div className="text-6xl">☕</div>
+              </div>
+            </div>
+          </div>
+        );
       case 'digital':
-        return (
-          <div className={`text-6xl font-mono font-bold ${textColorClass}`}>
-            {timeString}
-          </div>
-        );
-      case 'circle':
-        return (
-          <div className="relative w-64 h-64">
-            <svg className="w-full h-full" viewBox="0 0 100 100">
-              <circle
-                cx="50"
-                cy="50"
-                r="45"
-                fill="none"
-                stroke="#e0e0e0"
-                strokeWidth="8"
-              />
-              <circle
-                ref={progressCircleRef}
-                cx="50"
-                cy="50"
-                r="45"
-                fill="none"
-                stroke="#3b82f6"
-                strokeWidth="8"
-                strokeDasharray="283"
-                strokeDashoffset="0"
-                className="origin-center"
-                style={{
-                  willChange: 'transform',
-                  transform: 'rotate(-90deg) scaleX(0)'
-                }}
-              />
-              <text
-                x="50"
-                y="55"
-                textAnchor="middle"
-                className={`text-2xl font-bold ${textColorClass}`}
-              >
-                {timeString}
-              </text>
-            </svg>
-          </div>
-        );
-      // Add other visualization types as needed
       default:
         return (
-          <div className="text-6xl font-mono font-bold">
-            {timeString}
+          <div className={`text-6xl font-mono ${textColorClass}`}>
+            {formatTime(remainingMs)}
           </div>
         );
     }

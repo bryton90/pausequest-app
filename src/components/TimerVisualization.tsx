@@ -1,8 +1,8 @@
 import React from 'react';
-import { TimerVisualization as TimerVizType } from '../contexts/SettingsContext';
+import { VisualizationType } from '../utils/theme';
 
 interface TimerVisualizationProps {
-  type: TimerVizType;
+  type: VisualizationType;
   progress: number; // 0 to 1
   size?: number;
   className?: string;
@@ -15,203 +15,71 @@ const TimerVisualization: React.FC<TimerVisualizationProps> = ({
   className = '',
 }) => {
   const renderVisualization = () => {
-    const percentage = Math.min(100, Math.max(0, progress * 100));
-    const strokeWidth = 8;
-    const radius = (size - strokeWidth) / 2;
-    const circumference = radius * 2 * Math.PI;
-    const strokeDashoffset = circumference - (percentage / 100) * circumference;
-
-    const baseProps = {
-      className: `transition-all duration-300 ${className}`,
-      width: size,
-      height: size,
-      viewBox: `0 0 ${size} ${size}`,
-    };
-
     switch (type) {
-      case 'battery':
-        return (
-          <svg {...baseProps} className={`${baseProps.className} text-green-500`}>
-            <circle
-              className="text-gray-200 dark:text-gray-700"
-              strokeWidth={strokeWidth}
-              stroke="currentColor"
-              fill="transparent"
-              r={radius}
-              cx={size / 2}
-              cy={size / 2}
-            />
-            <circle
-              className="transform -rotate-90 origin-center"
-              strokeWidth={strokeWidth}
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
-              strokeLinecap="round"
-              stroke="currentColor"
-              fill="transparent"
-              r={radius}
-              cx={size / 2}
-              cy={size / 2}
-            />
-            <text
-              x="50%"
-              y="50%"
-              className="text-4xl font-bold fill-current"
-              dominantBaseline="middle"
-              textAnchor="middle"
-            >
-              🔋
-            </text>
-            <text
-              x="50%"
-              y="75%"
-              className="text-lg font-semibold fill-current"
-              dominantBaseline="middle"
-              textAnchor="middle"
-            >
-              {Math.round(percentage)}%
-            </text>
-          </svg>
-        );
-
       case 'rocket':
         return (
-          <svg {...baseProps} className={`${baseProps.className} text-blue-500`}>
-            <circle
-              className="text-gray-200 dark:text-gray-700"
-              strokeWidth={strokeWidth}
-              stroke="currentColor"
-              fill="transparent"
-              r={radius}
-              cx={size / 2}
-              cy={size / 2}
-            />
-            <circle
-              className="transform -rotate-90 origin-center"
-              strokeWidth={strokeWidth}
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
-              strokeLinecap="round"
-              stroke="currentColor"
-              fill="transparent"
-              r={radius}
-              cx={size / 2}
-              cy={size / 2}
-            />
-            <text
-              x="50%"
-              y="50%"
-              className="text-4xl font-bold fill-current"
-              dominantBaseline="middle"
-              textAnchor="middle"
-            >
-              🚀
-            </text>
-            <text
-              x="50%"
-              y="75%"
-              className="text-lg font-semibold fill-current"
-              dominantBaseline="middle"
-              textAnchor="middle"
-            >
-              {Math.round(percentage)}%
-            </text>
-          </svg>
+          <div 
+            className="relative"
+            style={{ width: size, height: size }}
+          >
+            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2">
+              <div className="relative">
+                <div 
+                  className="absolute bottom-0 left-1/2 transform -translate-x-1/2 bg-gray-300 rounded-t-full"
+                  style={{
+                    width: size * 0.6,
+                    height: size * 0.6 * (1 - progress),
+                    bottom: '10%',
+                  }}
+                />
+                <div className="text-6xl">🚀</div>
+                <div 
+                  className="absolute bottom-0 left-1/2 transform -translate-x-1/2 bg-orange-500 rounded-full"
+                  style={{
+                    width: size * 0.3,
+                    height: size * 0.1,
+                    bottom: '-5%',
+                  }}
+                />
+              </div>
+            </div>
+          </div>
         );
-
       case 'coffee':
         return (
-          <svg {...baseProps} className={`${baseProps.className} text-amber-600`}>
-            <circle
-              className="text-gray-200 dark:text-gray-700"
-              strokeWidth={strokeWidth}
-              stroke="currentColor"
-              fill="transparent"
-              r={radius}
-              cx={size / 2}
-              cy={size / 2}
-            />
-            <circle
-              className="transform -rotate-90 origin-center"
-              strokeWidth={strokeWidth}
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
-              strokeLinecap="round"
-              stroke="currentColor"
-              fill="transparent"
-              r={radius}
-              cx={size / 2}
-              cy={size / 2}
-            />
-            <text
-              x="50%"
-              y="50%"
-              className="text-4xl font-bold fill-current"
-              dominantBaseline="middle"
-              textAnchor="middle"
-            >
-              ☕
-            </text>
-            <text
-              x="50%"
-              y="75%"
-              className="text-lg font-semibold fill-current"
-              dominantBaseline="middle"
-              textAnchor="middle"
-            >
-              {Math.round(percentage)}%
-            </text>
-          </svg>
+          <div 
+            className="relative"
+            style={{ width: size, height: size }}
+          >
+            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2">
+              <div className="relative">
+                <div 
+                  className="absolute bottom-0 left-1/2 transform -translate-x-1/2 bg-amber-800 rounded-t-lg"
+                  style={{
+                    width: size * 0.6,
+                    height: size * 0.7 * progress,
+                    bottom: '10%',
+                  }}
+                />
+                <div className="text-6xl">☕</div>
+              </div>
+            </div>
+          </div>
         );
-
+      case 'digital':
       default:
         return (
-          <svg {...baseProps} className={`${baseProps.className} text-purple-500`}>
-            <circle
-              className="text-gray-200 dark:text-gray-700"
-              strokeWidth={strokeWidth}
-              stroke="currentColor"
-              fill="transparent"
-              r={radius}
-              cx={size / 2}
-              cy={size / 2}
-            />
-            <circle
-              className="transform -rotate-90 origin-center"
-              strokeWidth={strokeWidth}
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
-              strokeLinecap="round"
-              stroke="currentColor"
-              fill="transparent"
-              r={radius}
-              cx={size / 2}
-              cy={size / 2}
-            />
-            <text
-              x="50%"
-              y="50%"
-              className="text-4xl font-bold fill-current"
-              dominantBaseline="middle"
-              textAnchor="middle"
-            >
-              ⏱️
-            </text>
-            <text
-              x="50%"
-              y="75%"
-              className="text-2xl font-bold fill-current"
-              dominantBaseline="middle"
-              textAnchor="middle"
-            >
-              {Math.round(percentage)}%
-            </text>
-          </svg>
+          <div 
+            className="flex items-center justify-center text-4xl font-mono"
+            style={{ width: size, height: size }}
+          >
+            {Math.round(progress * 100)}%
+          </div>
         );
     }
   };
 
-  return <div className="flex justify-center">{renderVisualization()}</div>;
+  return <div className={className}>{renderVisualization()}</div>;
 };
 
 export default TimerVisualization;

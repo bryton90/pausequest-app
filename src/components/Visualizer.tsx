@@ -1,6 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
+import { VisualizationType } from '../utils/theme';
+
 type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'night';
 type SessionType = 'focus' | 'break';
 
@@ -8,6 +10,10 @@ interface VisualizerProps {
   timeOfDay: TimeOfDay;
   sessionType: SessionType;
   className?: string;
+  visualizationType: VisualizationType;
+  progress: number;
+  timeLeftInSeconds: number;
+  isFocusSession: boolean;
 }
 
 const timeOfDayColors = {

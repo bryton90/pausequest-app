@@ -17,7 +17,7 @@ import GamificationBanner from '../components/GamificationBanner';
 import TimerPageTabs from '../components/TimerPageTabs';
 import { useTimer } from '../hooks/useTimer';
 
-type TimerVisualization = 'battery' | 'rocket' | 'coffee' | 'circle' | 'bar' | 'digital';
+type TimerVisualization = 'rocket' | 'coffee' | 'digital';
 
 const MOODS = [
   { emoji: '😊', label: 'Happy', color: 'text-yellow-400' },
@@ -403,7 +403,27 @@ const TimerPage: React.FC = () => {
           timeOfDay={timeOfDay} 
           sessionType={sessionType}
           className="w-full h-full"
+          visualizationType={currentVisualization}
+          progress={1 - (timeLeftInSeconds / workDuration)}
+          timeLeftInSeconds={timeLeftInSeconds}
+          isFocusSession={sessionType === 'focus'}
         />
+      </div>
+      
+      {/* Visualization Type Selector */}
+      <div className="fixed bottom-4 right-4 flex flex-col space-y-2 z-20">
+        <select
+          value={currentVisualization}
+          onChange={(e) => setCurrentVisualization(e.target.value as TimerVisualization)}
+          className="bg-white dark:bg-gray-800 text-gray-800 dark:text-white rounded-md px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="battery">Battery</option>
+          <option value="rocket">Rocket</option>
+          <option value="coffee">Coffee</option>
+          <option value="digital">Digital</option>
+          <option value="circle">Circle</option>
+          <option value="bar">Progress Bar</option>
+        </select>
       </div>
       <div className="md:flex md:gap-8 md:max-w-5xl md:mx-auto">
         <div className="w-full md:w-2/3 lg:w-3/5 max-w-md mx-auto md:mx-0 bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
