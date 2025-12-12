@@ -6,7 +6,7 @@ import { SettingsProvider } from './contexts/SettingsContext';
 import { AuthProvider } from './contexts/AuthContext';
 
 // Lazy load components
-const TimerPage = lazy(() => import('./pages/TimerPage'));
+const MainPage = lazy(() => import('./pages/MainPage'));
 const StatsPage = lazy(() => import('./pages/StatsPage'));
 const HistoryPage = lazy(() => import('./pages/HistoryPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
@@ -35,7 +35,7 @@ const AppRouter: React.FC = () => {
                 >
                   <div className="max-w-6xl mx-auto">
                     <Routes>
-                      <Route path="/" element={<TimerPage />} />
+                      <Route path="/" element={<MainPage />} />
                       <Route path="/stats" element={<StatsPage />} />
                       <Route path="/history" element={<HistoryPage />} />
                       <Route path="/settings" element={<SettingsPage />} />
