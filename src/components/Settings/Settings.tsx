@@ -1,5 +1,5 @@
 import React from 'react';
-import { UserSettings, timerPresets } from '../../utils/theme';
+import { UserSettings, timerPresets, VisualizationType } from '../../utils/theme';
 import './Settings.css';
 import { useBreakTypes } from '../../hooks/useBreakTypes';
 
@@ -41,14 +41,14 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
               </select>
             </div>
             <div className="setting-item">
-              <label>Animation Type</label>
+              <label>Timer Style</label>
               <select 
-                value={settings.animationType} 
-                onChange={(e) => handleChange('animationType', e.target.value)}
+                value={settings.timerVisualization} 
+                onChange={(e) => handleChange('timerVisualization', e.target.value as VisualizationType)}
               >
-                <option value="battery">Battery Only</option>
-                <option value="rocket">Rocket Only</option>
-                <option value="both">Both</option>
+                <option value="rocket">Rocket Animation</option>
+                <option value="coffee">Coffee Cup</option>
+                <option value="digital">Digital Display</option>
               </select>
             </div>
           </div>

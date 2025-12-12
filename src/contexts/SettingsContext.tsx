@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect, useMemo } from 'react';
+import { VisualizationType } from '../utils/theme';
 
-export type TimerVisualization = 'battery' | 'rocket' | 'coffee' | 'default' | 'circle' | 'bar' | 'digital';
 export type ThemePreference = 'light' | 'dark' | 'system';
 
 interface NotificationPreferences {
@@ -12,8 +12,8 @@ interface NotificationPreferences {
 
 interface SettingsContextType {
   // Timer Settings
-  timerVisualization: TimerVisualization;
-  setTimerVisualization: (visualization: TimerVisualization) => void;
+  timerVisualization: VisualizationType;
+  setTimerVisualization: (visualization: VisualizationType) => void;
   
   // Display Settings
   theme: ThemePreference;
@@ -33,7 +33,7 @@ interface SettingsContextType {
 
 const defaultSettings = {
   // Timer Settings
-  timerVisualization: 'default' as TimerVisualization,
+  timerVisualization: 'digital' as VisualizationType,
   
   // Display Settings
   theme: 'system' as ThemePreference,
@@ -88,7 +88,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
   }, [settings]);
 
   // Timer Settings
-  const setTimerVisualization = useCallback((visualization: TimerVisualization) => {
+  const setTimerVisualization = useCallback((visualization: VisualizationType) => {
     setSettings((prev: any) => ({
       ...prev,
       timerVisualization: visualization,
