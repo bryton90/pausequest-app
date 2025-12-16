@@ -1,7 +1,6 @@
 # PauseQuest
 
-PauseQuest is a productivity web-app designed to help you manage your work sessions and take meaningful breaks. With a built-in timer, break prompts, and mood tracking, PauseQuest ensures you stay productive while maintaining your well-being.
-
+PauseQuest is a productivity web-app designed to help you manage your work sessions and take meaningful breaks. With a built-in timer, break prompts, and mood tracking, PauseQuest ensures you stay productive, avoid burnout, and build healthier work-break habits by combining focused timers with thoughtful break prompts and mood tracking."
 ---
 
 ## Features
