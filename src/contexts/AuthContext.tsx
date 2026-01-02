@@ -4,7 +4,7 @@ export type User = {
   metadata: any;
   id: string;
   email: string;
-  displayName?: string;
+  displayName?: string | undefined;
   photoURL?: string;
   bio?: string;
   stats?: {
@@ -35,10 +35,17 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>({
+    id: '1',
+    email: 'user@example.com',
+    displayName: 'Demo User',
+    metadata: {
+      creationTime: new Date('2024-01-01').toISOString()
+    }
+  });
   const [loading, setLoading] = useState<boolean>(false);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, _password: string) => {
     setLoading(true);
     try {
       // TODO: Implement your actual authentication logic here
@@ -47,7 +54,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // setUser(response.data.user);
       
       // Mock implementation
-      setUser({ id: '1', email });
+      setUser({ 
+        id: '1', 
+        email,
+        displayName: email.split('@')[0] || 'User',
+        metadata: {
+          creationTime: new Date().toISOString()
+        }
+      });
     } catch (error) {
       console.error('Login failed:', error);
       throw error;

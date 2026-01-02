@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { User } from '../../contexts/AuthContext';
-import { FiEdit2, FiSave, FiX, FiUser, FiMail, FiInfo } from 'react-icons/fi';
+import { FiEdit2, FiSave, FiX, FiUser, FiMail, FiInfo, FiCamera } from 'react-icons/fi';
 import './UserProfile.css';
 
 const UserProfile: React.FC = () => {
@@ -12,6 +12,8 @@ const UserProfile: React.FC = () => {
     email: '',
     bio: '',
   });
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (user) {
@@ -29,6 +31,28 @@ const UserProfile: React.FC = () => {
       ...prev,
       [name]: value,
     }));
+  };
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size must be less than 5MB');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        setPreviewImage(result);
+        setFormData(prev => ({ ...prev, photoURL: result }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handlePhotoUpload = () => {
+    fileInputRef.current?.click();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -77,17 +101,26 @@ const UserProfile: React.FC = () => {
 
       <div className="profile-content">
         <div className="profile-avatar">
-          {user.photoURL ? (
-            <img src={user.photoURL} alt={user.displayName || 'User'} className="avatar" />
+          {(previewImage || user.photoURL) ? (
+            <img src={previewImage || user.photoURL} alt={user.displayName || 'User'} className="avatar" />
           ) : (
             <div className="avatar-placeholder">
               <FiUser size={48} />
             </div>
           )}
           {isEditing && (
-            <button className="change-photo-button">
-              Change Photo
-            </button>
+            <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoChange}
+                style={{ display: 'none' }}
+              />
+              <button className="change-photo-button" onClick={handlePhotoUpload}>
+                <FiCamera /> Change Photo
+              </button>
+            </>
           )}
         </div>
 

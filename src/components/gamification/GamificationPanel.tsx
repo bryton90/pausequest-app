@@ -22,7 +22,7 @@ const GamificationPanel: React.FC<GamificationPanelProps> = memo(({
   );
 
   return (
-    <div className={`bg-white rounded-lg shadow p-4 ${className}`}>
+    <div className={`bg-bg-secondary rounded-lg shadow p-4 ${className}`}>
       <h3 className="text-lg font-semibold mb-4 flex items-center">
         <Zap className="w-5 h-5 mr-2 text-yellow-500" />
         Progress

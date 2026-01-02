@@ -4,8 +4,7 @@ import { AnimatePresence } from 'framer-motion';
 import { ErrorBoundary } from 'react-error-boundary';
 import { LoadingSpinner } from './components/common/LoadingSpinner';
 import AppLayout from './components/AppLayout';
-import { SettingsProvider } from './contexts/SettingsContext';
-import { AuthProvider } from './contexts/AuthContext';
+import { TimerProvider } from './contexts/TimerContext';
 
 // Lazy load components with error boundary
 const lazyWithRetry = (componentImport: any) =>
@@ -26,6 +25,8 @@ const StatsPage = lazyWithRetry(() => import('./pages/StatsPage'));
 const HistoryPage = lazyWithRetry(() => import('./pages/HistoryPage'));
 const SettingsPage = lazyWithRetry(() => import('./pages/SettingsPage'));
 const UserProfilePage = lazyWithRetry(() => import('./pages/UserProfilePage'));
+const AICoachPage = lazyWithRetry(() => import('./pages/AICoachPage'));
+const TestPage = lazyWithRetry(() => import('./pages/TestPage'));
 const NotFoundPage = lazyWithRetry(() => import('./pages/NotFoundPage'));
 
 // Error fallback component
@@ -66,6 +67,8 @@ const AnimatedRoutes = () => {
             <Route path="/history" element={<HistoryPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/profile" element={<UserProfilePage />} />
+            <Route path="/ai-coach" element={<AICoachPage />} />
+            <Route path="/test" element={<TestPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>
@@ -77,36 +80,34 @@ const AnimatedRoutes = () => {
 const AppRouter: React.FC = () => {
   return (
     <Router>
-      <AuthProvider>
-        <SettingsProvider>
-          <AppLayout>
-            <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6">
-              <AnimatedRoutes />
-            </div>
-          </AppLayout>
-          
-          <footer className="bg-bg-secondary border-t border-border-color mt-auto">
-            <div className="container mx-auto px-4 py-4 sm:py-5">
-              <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-                <p className="text-sm text-text-secondary text-center md:text-left">
-                  &copy; {new Date().getFullYear()} PauseQuest. All rights reserved.
-                </p>
-                <div className="flex items-center space-x-6">
-                  <a href="/privacy" className="text-sm text-text-secondary hover:text-primary transition-colors">
-                    Privacy
-                    </a>
-                    <a href="/terms" className="text-sm text-text-secondary hover:text-primary transition-colors">
-                      Terms
-                    </a>
-                    <a href="/contact" className="text-sm text-text-secondary hover:text-primary transition-colors">
-                      Contact
-                    </a>
-                  </div>
-                </div>
+      <TimerProvider>
+        <AppLayout>
+          <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6">
+            <AnimatedRoutes />
+          </div>
+        </AppLayout>
+        
+        <footer className="bg-bg-secondary border-t border-border-color mt-auto">
+          <div className="container mx-auto px-4 py-4 sm:py-5">
+            <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
+              <p className="text-sm text-text-secondary text-center md:text-left">
+                &copy; {new Date().getFullYear()} PauseQuest. All rights reserved.
+              </p>
+              <div className="flex items-center space-x-6">
+                <a href="/privacy" className="text-sm text-text-secondary hover:text-primary transition-colors">
+                  Privacy
+                </a>
+                <a href="/terms" className="text-sm text-text-secondary hover:text-primary transition-colors">
+                  Terms
+                </a>
+                <a href="/contact" className="text-sm text-text-secondary hover:text-primary transition-colors">
+                  Contact
+                </a>
               </div>
-            </footer>
-        </SettingsProvider>
-      </AuthProvider>
+            </div>
+          </div>
+        </footer>
+      </TimerProvider>
     </Router>
   );
 };

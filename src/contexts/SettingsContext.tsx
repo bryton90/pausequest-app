@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect, useMemo } from 'react';
-import { VisualizationType } from '../utils/theme';
+import { VisualizationType, timerPresets, TimerPreset } from '../utils/theme';
 
 export type ThemePreference = 'light' | 'dark' | 'system';
 
@@ -10,10 +10,25 @@ interface NotificationPreferences {
   weeklyReport: boolean;
 }
 
+interface TimerSettings {
+  visualization: VisualizationType;
+  preset: string;
+  customWorkDuration: number;
+  customBreakDuration: number;
+}
+
+interface SoundSettings {
+  enabled: boolean;
+  volume: number;
+}
+
 interface SettingsContextType {
   // Timer Settings
-  timerVisualization: VisualizationType;
+  timerSettings: TimerSettings;
   setTimerVisualization: (visualization: VisualizationType) => void;
+  setTimerPreset: (preset: string) => void;
+  setCustomWorkDuration: (duration: number) => void;
+  setCustomBreakDuration: (duration: number) => void;
   
   // Display Settings
   theme: ThemePreference;
@@ -23,22 +38,39 @@ interface SettingsContextType {
   enableVisualEffects: boolean;
   toggleVisualEffects: () => void;
   
+  // Sound Settings
+  soundSettings: SoundSettings;
+  setSoundEnabled: (enabled: boolean) => void;
+  setSoundVolume: (volume: number) => void;
+  
   // Notification Settings
   notifications: NotificationPreferences;
   updateNotificationPreference: (key: keyof NotificationPreferences, value: boolean) => void;
   
   // Utility
   isDarkMode: boolean;
+  getCurrentTimerPreset: () => TimerPreset;
 }
 
 const defaultSettings = {
   // Timer Settings
-  timerVisualization: 'digital' as VisualizationType,
+  timerSettings: {
+    visualization: 'digital' as VisualizationType,
+    preset: 'pomodoro',
+    customWorkDuration: 1500, // 25 minutes
+    customBreakDuration: 300, // 5 minutes
+  },
   
   // Display Settings
   theme: 'system' as ThemePreference,
   showMoodAvatars: true,
   enableVisualEffects: true,
+  
+  // Sound Settings
+  soundSettings: {
+    enabled: true,
+    volume: 0.5,
+  },
   
   // Notification Settings
   notifications: {
@@ -62,6 +94,40 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   });
 
+  // Apply theme on initial mount
+  useEffect(() => {
+    const root = window.document.documentElement;
+    const isDark = settings.theme === 'dark' || 
+                  (settings.theme === 'system' && 
+                   window.matchMedia('(prefers-color-scheme: dark)').matches);
+    
+    // Update CSS variables for both light and dark themes
+    if (isDark) {
+      root.style.setProperty('--bg-color', '#1f2937');
+      root.style.setProperty('--bg-secondary', '#374151');
+      root.style.setProperty('--bg-hover', '#4b5563');
+      root.style.setProperty('--text-primary', '#f9fafb');
+      root.style.setProperty('--text-secondary', '#d1d5db');
+      root.style.setProperty('--border-color', '#4b5563');
+      root.style.setProperty('--primary-color', '#6366f1');
+      root.style.setProperty('--primary-hover', '#4f46e5');
+      root.classList.add('dark');
+    } else {
+      root.style.setProperty('--bg-color', '#ffffff');
+      root.style.setProperty('--bg-secondary', '#f9fafb');
+      root.style.setProperty('--bg-hover', '#f3f4f6');
+      root.style.setProperty('--text-primary', '#1f2937');
+      root.style.setProperty('--text-secondary', '#6b7280');
+      root.style.setProperty('--border-color', '#e5e7eb');
+      root.style.setProperty('--primary-color', '#4f46e5');
+      root.style.setProperty('--primary-hover', '#4338ca');
+      root.classList.remove('dark');
+    }
+    
+    // Update data-theme attribute for CSS selectors
+    root.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  }, []); // Run only on mount
+
   // Apply theme when it changes
   useEffect(() => {
     const root = window.document.documentElement;
@@ -69,13 +135,70 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
                   (settings.theme === 'system' && 
                    window.matchMedia('(prefers-color-scheme: dark)').matches);
     
-    // Update HTML attributes/classes based on theme preference
-    root.setAttribute('data-theme', isDark ? 'dark' : 'light');
+    // Update CSS variables for both light and dark themes
     if (isDark) {
+      root.style.setProperty('--bg-color', '#1f2937');
+      root.style.setProperty('--bg-secondary', '#374151');
+      root.style.setProperty('--bg-hover', '#4b5563');
+      root.style.setProperty('--text-primary', '#f9fafb');
+      root.style.setProperty('--text-secondary', '#d1d5db');
+      root.style.setProperty('--border-color', '#4b5563');
+      root.style.setProperty('--primary-color', '#6366f1');
+      root.style.setProperty('--primary-hover', '#4f46e5');
       root.classList.add('dark');
     } else {
+      root.style.setProperty('--bg-color', '#ffffff');
+      root.style.setProperty('--bg-secondary', '#f9fafb');
+      root.style.setProperty('--bg-hover', '#f3f4f6');
+      root.style.setProperty('--text-primary', '#1f2937');
+      root.style.setProperty('--text-secondary', '#6b7280');
+      root.style.setProperty('--border-color', '#e5e7eb');
+      root.style.setProperty('--primary-color', '#4f46e5');
+      root.style.setProperty('--primary-hover', '#4338ca');
       root.classList.remove('dark');
     }
+    
+    // Update data-theme attribute for CSS selectors
+    root.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  }, [settings.theme]);
+
+  // Listen for system theme changes when using system theme
+  useEffect(() => {
+    if (settings.theme !== 'system') return;
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = () => {
+      const root = window.document.documentElement;
+      const isDark = mediaQuery.matches;
+      
+      // Update CSS variables for system theme change
+      if (isDark) {
+        root.style.setProperty('--bg-color', '#1f2937');
+        root.style.setProperty('--bg-secondary', '#374151');
+        root.style.setProperty('--bg-hover', '#4b5563');
+        root.style.setProperty('--text-primary', '#f9fafb');
+        root.style.setProperty('--text-secondary', '#d1d5db');
+        root.style.setProperty('--border-color', '#4b5563');
+        root.style.setProperty('--primary-color', '#6366f1');
+        root.style.setProperty('--primary-hover', '#4f46e5');
+        root.classList.add('dark');
+      } else {
+        root.style.setProperty('--bg-color', '#ffffff');
+        root.style.setProperty('--bg-secondary', '#f9fafb');
+        root.style.setProperty('--bg-hover', '#f3f4f6');
+        root.style.setProperty('--text-primary', '#1f2937');
+        root.style.setProperty('--text-secondary', '#6b7280');
+        root.style.setProperty('--border-color', '#e5e7eb');
+        root.style.setProperty('--primary-color', '#4f46e5');
+        root.style.setProperty('--primary-hover', '#4338ca');
+        root.classList.remove('dark');
+      }
+      
+      root.setAttribute('data-theme', isDark ? 'dark' : 'light');
+    };
+
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
   }, [settings.theme]);
 
   // Save settings to localStorage when they change
@@ -91,12 +214,47 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
   const setTimerVisualization = useCallback((visualization: VisualizationType) => {
     setSettings((prev: any) => ({
       ...prev,
-      timerVisualization: visualization,
+      timerSettings: {
+        ...prev.timerSettings,
+        visualization,
+      },
+    }));
+  }, []);
+
+  const setTimerPreset = useCallback((preset: string) => {
+    console.log('SettingsContext - setTimerPreset called with:', preset);
+    setSettings((prev: any) => ({
+      ...prev,
+      timerSettings: {
+        ...prev.timerSettings,
+        preset,
+      },
+    }));
+  }, []);
+
+  const setCustomWorkDuration = useCallback((duration: number) => {
+    setSettings((prev: any) => ({
+      ...prev,
+      timerSettings: {
+        ...prev.timerSettings,
+        customWorkDuration: duration,
+      },
+    }));
+  }, []);
+
+  const setCustomBreakDuration = useCallback((duration: number) => {
+    setSettings((prev: any) => ({
+      ...prev,
+      timerSettings: {
+        ...prev.timerSettings,
+        customBreakDuration: duration,
+      },
     }));
   }, []);
 
   // Display Settings
   const setTheme = useCallback((theme: ThemePreference) => {
+    console.log('SettingsContext - setTheme called with:', theme);
     setSettings((prev: any) => ({
       ...prev,
       theme,
@@ -128,6 +286,35 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     }));
   }, []);
 
+  // Sound Settings
+  const setSoundEnabled = useCallback((enabled: boolean) => {
+    console.log('SettingsContext - setSoundEnabled called with:', enabled);
+    setSettings((prev: any) => ({
+      ...prev,
+      soundSettings: {
+        ...prev.soundSettings,
+        enabled,
+      },
+    }));
+  }, []);
+
+  const setSoundVolume = useCallback((volume: number) => {
+    console.log('SettingsContext - setSoundVolume called with:', volume);
+    setSettings((prev: any) => ({
+      ...prev,
+      soundSettings: {
+        ...prev.soundSettings,
+        volume: Math.max(0, Math.min(1, volume)), // Clamp between 0 and 1
+      },
+    }));
+  }, []);
+
+  // Get current timer preset
+  const getCurrentTimerPreset = useCallback((): TimerPreset => {
+    const preset = timerPresets.find(p => p.id === settings.timerSettings.preset);
+    return preset || timerPresets.find(p => p.id === 'pomodoro') || timerPresets[0]!; // Fallback with non-null assertion
+  }, [settings.timerSettings.preset]);
+
   // Check if we're in dark mode
   const isDarkMode = useMemo(() => {
     return settings.theme === 'dark' || 
@@ -137,8 +324,11 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const value = useMemo(() => ({
     // Timer Settings
-    timerVisualization: settings.timerVisualization,
+    timerSettings: settings.timerSettings,
     setTimerVisualization,
+    setTimerPreset,
+    setCustomWorkDuration,
+    setCustomBreakDuration,
     
     // Display Settings
     theme: settings.theme,
@@ -148,24 +338,37 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     enableVisualEffects: settings.enableVisualEffects,
     toggleVisualEffects,
     
+    // Sound Settings
+    soundSettings: settings.soundSettings,
+    setSoundEnabled,
+    setSoundVolume,
+    
     // Notification Settings
     notifications: settings.notifications,
     updateNotificationPreference,
     
     // Utility
     isDarkMode,
+    getCurrentTimerPreset,
   }), [
-    settings.timerVisualization,
+    settings.timerSettings,
     settings.theme,
     settings.showMoodAvatars,
     settings.enableVisualEffects,
+    settings.soundSettings,
     settings.notifications,
     isDarkMode,
     setTimerVisualization,
+    setTimerPreset,
+    setCustomWorkDuration,
+    setCustomBreakDuration,
     setTheme,
     toggleMoodAvatars,
     toggleVisualEffects,
+    setSoundEnabled,
+    setSoundVolume,
     updateNotificationPreference,
+    getCurrentTimerPreset,
   ]);
 
   return (
