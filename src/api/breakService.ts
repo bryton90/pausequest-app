@@ -36,6 +36,7 @@ export interface Session {
   timestamp: string;
   streakCount: number;
   totalPoints: number;
+  session_type?: 'focus' | 'break';
   created_at?: string;
   updated_at?: string;
 }
