@@ -60,7 +60,10 @@
     "noEmitOnError": true,
 
     /* React & Emotion */
+
+    /* Type Declaration Files */
+    "types": ["vitest/globals", "@testing-library/jest-dom"]
   },
   "include": ["src"],
-  "exclude": ["node_modules", "dist", "build", "**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"]
+  "exclude": ["node_modules", "dist", "build"]
 }
