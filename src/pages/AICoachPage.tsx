@@ -32,7 +32,7 @@ const AICoachPage: React.FC = () => {
     {
       id: '1',
       type: 'coach',
-      content: "🧠 Welcome to your AI-Powered Focus Mastery Hub! I'm using machine learning to analyze your patterns and provide personalized insights. Ready to discover your productivity archetype?",
+      content: "🧠 **Welcome to your AI-Powered Focus Mastery Hub!**\n\nI'm using machine learning to analyze your patterns and provide personalized insights. Here's what I can help you with:\n\n• **Productivity Analysis**: Identify your unique work style and patterns\n• **Focus Optimization**: Data-driven strategies for better concentration\n• **Wellness Insights**: Balance productivity with mental health\n• **Personalized Recommendations**: Custom tips based on your behavior\n\nReady to discover your productivity archetype?",
       timestamp: new Date()
     }
   ]);
@@ -68,7 +68,7 @@ const AICoachPage: React.FC = () => {
         const insightMessage: AICoachMessage = {
           id: 'ml-insights',
           type: 'coach',
-          content: `🤖 **ML Analysis Complete!**\n\nI've analyzed your patterns and identified you as a **${profile.archetype.name}**.\n\n**Key Insights:**\n${profile.insights.slice(0, 2).map(insight => `• ${insight.title}: ${insight.description}`).join('\n')}\n\nAsk me anything about your productivity patterns!`,
+          content: `🤖 **ML Analysis Complete!**\n\nI've analyzed your patterns and identified you as a **${profile.archetype.name}**.\n\n**Key Insights:**\n${profile.insights.slice(0, 2).map(insight => `• ${insight.title}: ${insight.description}`).join('\n')}\n\n**What I can help you with:**\n• Personalized productivity strategies\n• Focus optimization techniques\n• Wellness and balance recommendations\n• Performance pattern analysis\n\nAsk me anything about your productivity patterns!`,
           timestamp: new Date()
         };
         setMessages(prev => [...prev, insightMessage]);
@@ -224,7 +224,7 @@ const AICoachPage: React.FC = () => {
   // Generate ML-enhanced response
   const generateMLEnhancedResponse = (queryAnalysis: QueryAnalysis): string => {
     if (!userProfile) {
-      return "I'm still analyzing your patterns. Start a few focus sessions and I'll provide personalized insights!";
+      return "🧠 **Welcome to your AI Coach!**\n\nI'm here to help you master your productivity. Here's what I can do:\n\n• **Pattern Analysis**: Identify your unique productivity archetype\n• **Personalized Recommendations**: Custom strategies based on your work style\n• **Focus Optimization**: Data-driven tips for better concentration\n• **Wellness Insights**: Balance productivity with well-being\n\nStart a few focus sessions and I'll provide personalized insights!";
     }
 
     const { intent } = queryAnalysis;
@@ -241,48 +241,53 @@ const AICoachPage: React.FC = () => {
     // Generate response based on intent and ML insights
     switch (intent.type) {
       case 'productivity':
-        response = `📈 **Productivity Analysis**\n\nBased on your ${userProfile.archetype.name} profile: ${userProfile.archetype.description}\n\n**Personalized Recommendations:**\n${userProfile.archetype.recommendations.slice(0, 3).map(rec => `• ${rec}`).join('\n')}`;
+        response = `📈 **Productivity Analysis**\n\n**Your Profile**: ${userProfile.archetype.name}\n${userProfile.archetype.description}\n\n**Personalized Recommendations:**`;
+        
+        userProfile.archetype.recommendations.slice(0, 3).forEach(rec => {
+          response += `\n• ${rec}`;
+        });
         
         if (relevantInsights.length > 0 && relevantInsights[0]) {
-          response += `\n\n**Recent Insights:**\n${relevantInsights[0].description}`;
+          response += `\n\n**Recent Insights:**\n• ${relevantInsights[0].description}`;
         }
         break;
 
       case 'wellness':
-        response = `🧘 **Wellness Intelligence**\n\nI've analyzed your patterns and wellness indicators: ${userProfile.insights.filter(i => i.type === 'anomaly').length > 0 ? 'Some areas need attention' : 'Your patterns look healthy!'}\n\n**For your ${userProfile.archetype.name} style:**`;
+        response = `🧘 **Wellness Intelligence**\n\n**Your Wellness Status**: ${userProfile.insights.filter(i => i.type === 'anomaly').length > 0 ? 'Some areas need attention' : 'Your patterns look healthy!'}\n\n**For your ${userProfile.archetype.name} style:**`;
         
         // Add wellness-specific recommendations
         if (sentiment.label === 'negative') {
-          response += '\n• Consider taking a recovery break\n• Your current patterns suggest high stress';
+          response += '\n• Consider taking a recovery break\n• Your current patterns suggest high stress\n• Try a 10-minute meditation session';
         } else {
-          response += '\n• Maintain your current routine\n• Your wellness indicators are positive';
+          response += '\n• Maintain your current routine\n• Your wellness indicators are positive\n• Keep up the great work!';
         }
         break;
 
       case 'focus':
-        response = `🎯 **Focus Optimization**\n\nAs a ${userProfile.archetype.name}, your focus patterns show: ${userProfile.patterns.filter(p => p.type === 'session-based').length > 0 ? 'Strong session consistency' : 'Room for improvement'}\n\n**ML-Recommended Strategies:**`;
+        response = `🎯 **Focus Optimization**\n\n**Your Focus Style**: As a ${userProfile.archetype.name}, your patterns show: ${userProfile.patterns.filter(p => p.type === 'session-based').length > 0 ? 'Strong session consistency' : 'Room for improvement'}\n\n**ML-Recommended Strategies:**`;
         
         // Add focus-specific insights
         const focusInsights = userProfile.insights.filter(i => i.type === 'pattern' && i.title.toLowerCase().includes('focus'));
         if (focusInsights.length > 0 && focusInsights[0]) {
-          // For now, use a generic message since MLInsight doesn't have implications
           response += `\n• Focus pattern detected: ${focusInsights[0].title}\n• Recommendation: ${focusInsights[0].description}`;
         }
+        
+        response += '\n\n**Quick Focus Tips:**\n• Use the Pomodoro Technique (25min focus, 5min break)\n• Eliminate distractions before starting\n• Set clear intentions for each session';
         break;
 
       case 'help':
-        response = `🤖 **AI Coach Capabilities**\n\nI can provide:\n• **Pattern Analysis**: Your productivity archetype and behavioral patterns\n• **Predictive Insights**: When you'll be most productive\n• **Personalized Recommendations**: Based on your unique work style\n• **Real-time Guidance**: Context-aware suggestions\n\n**Your Current Profile:** ${userProfile.archetype.name}\n**Confidence Level**: ${Math.round(userProfile.insights.reduce((acc, i) => acc + i.confidence, 0) / userProfile.insights.length * 100)}%\n\nWhat would you like to explore?`;
+        response = `🤖 **AI Coach Capabilities**\n\nI can provide:\n\n• **Pattern Analysis**: Your productivity archetype and behavioral patterns\n• **Predictive Insights**: When you'll be most productive\n• **Personalized Recommendations**: Based on your unique work style\n• **Real-time Guidance**: Context-aware suggestions\n\n**Your Current Stats:**\n• Profile: ${userProfile.archetype.name}\n• Confidence Level: ${Math.round(userProfile.insights.reduce((acc, i) => acc + i.confidence, 0) / userProfile.insights.length * 100)}%\n• Patterns Identified: ${userProfile.patterns.length}\n\nWhat would you like to explore?`;
         break;
 
       default:
-        response = `🧠 **Intelligent Analysis**\n\nI understand you're interested in ${intent.type}. Based on your ${userProfile.archetype.name} profile and current patterns:\n\n**Key Metrics:**\n• Pattern Confidence: ${Math.round(userProfile.insights.reduce((acc, i) => acc + i.confidence, 0) / userProfile.insights.length * 100)}%\n• Identified Patterns: ${userProfile.patterns.length}\n• Active Recommendations: ${userProfile.insights.filter(i => i.actionable).length}\n\nAsk me for specific recommendations!`;
+        response = `🧠 **Intelligent Analysis**\n\nI understand you're interested in ${intent.type}. Based on your ${userProfile.archetype.name} profile:\n\n**Key Metrics:**\n• Pattern Confidence: ${Math.round(userProfile.insights.reduce((acc, i) => acc + i.confidence, 0) / userProfile.insights.length * 100)}%\n• Identified Patterns: ${userProfile.patterns.length}\n• Active Recommendations: ${userProfile.insights.filter(i => i.actionable).length}\n\n**Ask me about:**\n• Productivity strategies\n• Focus optimization\n• Wellness recommendations\n• Performance insights`;
     }
 
     // Add sentiment-aware closing
     if (sentiment.label === 'negative') {
-      response += '\n\nI notice you might be feeling frustrated. I\'m here to help you turn things around with data-driven strategies.';
+      response += '\n\n**💙 Support Note:** I notice you might be feeling frustrated. I\'m here to help you turn things around with data-driven strategies.';
     } else if (sentiment.label === 'positive') {
-      response += '\n\nGreat attitude! Let\'s build on this positive momentum.';
+      response += '\n\n**🚀 Momentum Builder:** Great attitude! Let\'s build on this positive momentum.';
     }
 
     // Add entity-specific information
@@ -385,7 +390,7 @@ const AICoachPage: React.FC = () => {
                           : isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-100 text-gray-800'
                       }`}
                     >
-                      <p className="text-sm">{message.content}</p>
+                      <p className="text-sm whitespace-pre-line">{message.content}</p>
                       <p className={`text-xs mt-1 ${
                         message.type === 'user' ? 'text-indigo-100' : 'text-gray-500'
                       }`}>
