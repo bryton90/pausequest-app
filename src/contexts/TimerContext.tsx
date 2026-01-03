@@ -11,6 +11,8 @@ interface TimerState {
   isRunning: boolean;
   sessionType: SessionType;
   completedSessions: number;
+  soundPlayed: boolean;
+  escalationSoundPlayed: boolean;
 }
 
 type TimerAction =
@@ -19,6 +21,9 @@ type TimerAction =
   | { type: 'SET_SESSION_TYPE'; payload: SessionType }
   | { type: 'TICK' }
   | { type: 'SESSION_COMPLETE' }
+  | { type: 'MARK_SOUND_PLAYED' }
+  | { type: 'MARK_ESCALATION_SOUND_PLAYED' }
+  | { type: 'RESET_ESCALATION_SOUND' }
   | { type: 'LOAD_STATE'; payload: TimerState };
 
 const FOCUS_TIME = 25 * 60; // 25 minutes in seconds
@@ -28,6 +33,8 @@ const initialState: TimerState = {
   isRunning: false,
   sessionType: 'focus',
   completedSessions: 0,
+  soundPlayed: false,
+  escalationSoundPlayed: false,
 };
 
 interface TimerContextType {
@@ -104,13 +111,19 @@ export const TimerProvider: React.FC<TimerProviderProps> = ({ children }) => {
     setState((prevState: TimerState) => {
       switch (action.type) {
         case 'TOGGLE_TIMER':
-          return { ...prevState, isRunning: !prevState.isRunning };
+          return { 
+            ...prevState, 
+            isRunning: !prevState.isRunning,
+            soundPlayed: prevState.timeLeft === 0 ? false : prevState.soundPlayed, // Reset sound flag if starting from zero
+          };
         
         case 'RESET_TIMER':
           return {
             ...prevState,
             timeLeft: prevState.sessionType === 'focus' ? workDuration : breakDuration,
             isRunning: false,
+            soundPlayed: false, // Reset sound flag when timer is reset
+            escalationSoundPlayed: false, // Reset escalation sound flag when timer is reset
           };
         
         case 'SET_SESSION_TYPE':
@@ -119,6 +132,8 @@ export const TimerProvider: React.FC<TimerProviderProps> = ({ children }) => {
             sessionType: action.payload,
             timeLeft: action.payload === 'focus' ? workDuration : breakDuration,
             isRunning: false,
+            soundPlayed: false, // Reset sound flag when changing session type
+            escalationSoundPlayed: false, // Reset escalation sound flag when changing session type
           };
         
         case 'TICK':
@@ -135,6 +150,26 @@ export const TimerProvider: React.FC<TimerProviderProps> = ({ children }) => {
             timeLeft: newSessionType === 'focus' ? workDuration : breakDuration,
             isRunning: false,
             completedSessions: prevState.sessionType === 'focus' ? prevState.completedSessions + 1 : prevState.completedSessions,
+            soundPlayed: true, // Mark that sound was played for this completion
+            escalationSoundPlayed: false, // Reset escalation sound flag for new session
+          };
+        
+        case 'MARK_SOUND_PLAYED':
+          return {
+            ...prevState,
+            soundPlayed: true,
+          };
+        
+        case 'MARK_ESCALATION_SOUND_PLAYED':
+          return {
+            ...prevState,
+            escalationSoundPlayed: true,
+          };
+        
+        case 'RESET_ESCALATION_SOUND':
+          return {
+            ...prevState,
+            escalationSoundPlayed: false,
           };
         
         case 'LOAD_STATE':
@@ -187,12 +222,56 @@ export const TimerProvider: React.FC<TimerProviderProps> = ({ children }) => {
   // Handle session completion
   useEffect(() => {
     if (state.timeLeft === 0 && state.isRunning) {
-      // Play sound with settings using the centralized sound utility
+      // Play sound immediately before stopping the timer
+      console.log('=== PLAYING COMPLETION SOUND ===');
+      console.log('Sound enabled:', soundSettings.enabled);
+      console.log('Sound volume:', soundSettings.volume);
+      
       playSound('complete', soundSettings.volume, soundSettings.enabled);
       
+      // If this was a focus session, emit event for stats tracking
+      if (state.sessionType === 'focus') {
+        console.log('=== EMITTING SESSION COMPLETE EVENT ===');
+        console.log('Session type:', state.sessionType);
+        console.log('Completed sessions:', state.completedSessions);
+        
+        const event = new CustomEvent('sessionComplete', {
+          detail: { sessionType: 'focus', completedSessions: state.completedSessions + 1 }
+        });
+        
+        console.log('Dispatching event:', event);
+        window.dispatchEvent(event);
+        console.log('Event dispatched successfully');
+      }
+      
+      // Stop the timer after playing sound
       dispatch({ type: 'SESSION_COMPLETE' });
     }
-  }, [state.timeLeft, state.isRunning, soundSettings.enabled, soundSettings.volume]);
+  }, [state.timeLeft, state.isRunning, soundSettings.enabled, soundSettings.volume, state.sessionType, state.completedSessions]);
+
+  // Backup sound trigger - play sound when timer stops at zero
+  useEffect(() => {
+    if (state.timeLeft === 0 && !state.isRunning && !state.soundPlayed) {
+      console.log('=== BACKUP SOUND TRIGGER ===');
+      playSound('complete', soundSettings.volume, soundSettings.enabled);
+      dispatch({ type: 'MARK_SOUND_PLAYED' });
+    }
+  }, [state.timeLeft, state.isRunning, state.soundPlayed, soundSettings.enabled, soundSettings.volume]);
+
+  // Escalation sound trigger - play warning when time is running low
+  useEffect(() => {
+    // Play escalation sound when there are 10 seconds left and it hasn't been played yet
+    if (state.timeLeft === 10 && state.isRunning && !state.escalationSoundPlayed && soundSettings.enabled) {
+      console.log('=== PLAYING ESCALATION SOUND ===');
+      playSound('escalation', soundSettings.volume, soundSettings.enabled);
+      dispatch({ type: 'MARK_ESCALATION_SOUND_PLAYED' });
+    }
+    
+    // Reset escalation sound flag if timer is reset or time increases (like when switching sessions)
+    if (state.timeLeft > 10 && state.escalationSoundPlayed) {
+      dispatch({ type: 'RESET_ESCALATION_SOUND' });
+    }
+  }, [state.timeLeft, state.isRunning, state.escalationSoundPlayed, soundSettings.enabled, soundSettings.volume]);
 
   const toggleTimer = () => {
     // Play start sound when timer starts (not when it's paused)

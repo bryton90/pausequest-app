@@ -27,7 +27,7 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
         </h3>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <label className="text-gray-700 font-medium">Theme</label>
+            <label className="text-gray-700 font-medium mr-4">Theme</label>
             <select 
               value={settings.theme} 
               onChange={(e) => handleChange('theme', e.target.value)}
@@ -39,7 +39,7 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
             </select>
           </div>
           <div className="flex items-center justify-between">
-            <label className="text-gray-700 font-medium">Timer Style</label>
+            <label className="text-gray-700 font-medium mr-4">Timer Style</label>
             <select 
               value={settings.timerVisualization} 
               onChange={(e) => handleChange('timerVisualization', e.target.value as VisualizationType)}
@@ -60,7 +60,7 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
         </h3>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <label className="text-gray-700 font-medium">Preset</label>
+            <label className="text-gray-700 font-medium mr-4">Preset</label>
             <select 
               value={settings.timerPreset} 
               onChange={(e) => handleChange('timerPreset', e.target.value)}
@@ -156,7 +156,7 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange, 
               placeholder="Emoji (optional)"
               value={newEmoji}
               onChange={(e) => setNewEmoji(e.target.value)}
-              className="px-4 py-2 rounded-xl border border-gray-300 bg-bg-secondary text-text-primary focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all w-24"
+              className="px-4 py-2 rounded-xl border border-gray-300 bg-bg-secondary text-text-primary focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all w-32"
             />
             <button
               onClick={() => {

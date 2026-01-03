@@ -258,7 +258,7 @@ const MainPage = () => {
                         : 'text-gray-600 hover:text-gray-800'
                     }`}
                   >
-                    🎯 Focus ({Math.floor(FOCUS_TIME / 60)} min)
+                    🎯 Focus ({Math.floor(currentPreset.workDuration / 60)} min)
                   </button>
                   <button
                     onClick={() => setSessionType('break')}
@@ -268,7 +268,7 @@ const MainPage = () => {
                         : 'text-gray-600 hover:text-gray-800'
                     }`}
                   >
-                    ☕ Break ({Math.floor(BREAK_TIME / 60)} min)
+                    ☕ Break ({Math.floor(currentPreset.breakDuration / 60)} min)
                   </button>
                 </div>
               </div>

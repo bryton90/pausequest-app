@@ -39,6 +39,7 @@ export interface Session {
   session_type?: 'focus' | 'break';
   created_at?: string;
   updated_at?: string;
+  sentiment_score?: number;
 }
 
 export interface SessionHistoryResponse {

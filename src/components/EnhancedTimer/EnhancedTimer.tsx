@@ -9,6 +9,7 @@ import {
 } from '../LottieAnimations/LottieAnimations';
 import { advancedNotificationService } from '../../lib/services/advancedNotificationService.js';
 import { enhancedAIService } from '../../services/enhancedAIService.js';
+import { getInitialStats, saveStats, updateStatsAfterSession, UserStats } from '../../utils/gamification';
 import { Session } from '../../api/breakService.js';
 
 interface EnhancedTimerProps {
@@ -63,23 +64,15 @@ export const EnhancedTimer: React.FC<EnhancedTimerProps> = ({
   const [showCelebration, setShowCelebration] = useState(false);
   const [currentAchievement, setCurrentAchievement] = useState<Achievement | null>(null);
   const [showAchievement, setShowAchievement] = useState(false);
-  const [totalSessions, setTotalSessions] = useState(0);
-  const [currentStreak, setCurrentStreak] = useState(0);
+  const [stats, setStats] = useState<UserStats | null>(null);
 
   const totalTime = sessionType === 'focus' ? initialTime : 5 * 60; // 5 min breaks
   const progress = ((totalTime - timeLeft) / totalTime) * 100;
 
   // Load user stats
   useEffect(() => {
-    const loadStats = () => {
-      const saved = localStorage.getItem(`pausequest-stats-${userId}`);
-      if (saved) {
-        const stats = JSON.parse(saved);
-        setTotalSessions(stats.totalSessions || 0);
-        setCurrentStreak(stats.currentStreak || 0);
-      }
-    };
-    loadStats();
+    const userStats = getInitialStats();
+    setStats(userStats);
   }, [userId]);
 
   // Timer logic
@@ -120,20 +113,20 @@ export const EnhancedTimer: React.FC<EnhancedTimerProps> = ({
         notes: '',
         timestamp: new Date().toISOString()
       } as unknown as Session);
+      
+      // Update stats using gamification utils
+      if (stats) {
+        const sessionDuration = Math.round(totalTime / 60); // Convert seconds to minutes
+        const updatedStats = updateStatsAfterSession(stats, sessionDuration);
+        setStats(updatedStats);
+        saveStats(updatedStats);
+        
+        // Dispatch custom event for other components
+        window.dispatchEvent(new CustomEvent('sessionComplete', {
+          detail: { stats: updatedStats }
+        }));
+      }
     }
-
-    // Update stats
-    const newTotalSessions = totalSessions + (sessionType === 'focus' ? 1 : 0);
-    const newStreak = sessionType === 'focus' ? currentStreak + 1 : currentStreak;
-    
-    setTotalSessions(newTotalSessions);
-    setCurrentStreak(newStreak);
-    
-    localStorage.setItem(`pausequest-stats-${userId}`, JSON.stringify({
-      totalSessions: newTotalSessions,
-      currentStreak: newStreak,
-      lastSessionDate: new Date().toISOString()
-    }));
 
     if (onSessionComplete) {
       onSessionComplete({
@@ -151,11 +144,13 @@ export const EnhancedTimer: React.FC<EnhancedTimerProps> = ({
         setTimeLeft(5 * 60);
       }, 2000);
     }
-  }, [sessionType, totalTime, totalSessions, currentStreak, userId, onSessionComplete]);
+  }, [sessionType, totalTime, stats, userId, onSessionComplete]);
 
   const checkAndAwardAchievements = () => {
-    const newTotalSessions = totalSessions + 1;
-    const newStreak = currentStreak + 1;
+    if (!stats) return;
+    
+    const newTotalSessions = stats.totalSessions + 1;
+    const newStreak = stats.currentStreak + 1;
     const hour = new Date().getHours();
 
     // Check for achievements
@@ -325,11 +320,11 @@ export const EnhancedTimer: React.FC<EnhancedTimerProps> = ({
         transition={{ delay: 0.4 }}
       >
         <div>
-          <div className="text-2xl font-bold text-foreground">{totalSessions}</div>
+          <div className="text-2xl font-bold text-foreground">{stats?.totalSessions || 0}</div>
           <div className="text-sm text-muted-foreground">Total Sessions</div>
         </div>
         <div>
-          <div className="text-2xl font-bold text-foreground">{currentStreak}</div>
+          <div className="text-2xl font-bold text-foreground">{stats?.currentStreak || 0}</div>
           <div className="text-sm text-muted-foreground">Current Streak</div>
         </div>
         <div>

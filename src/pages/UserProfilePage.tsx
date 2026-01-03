@@ -19,24 +19,7 @@ import {
   Camera
 } from 'lucide-react';
 
-interface UserStats {
-  totalFocusHours: number;
-  highestStreak: number;
-  totalPoints: number;
-  sessionsCompleted: number;
-  averageSessionLength: number;
-  currentStreak: number;
-}
-
-interface Achievement {
-  id: string;
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  unlocked: boolean;
-  progress?: number;
-  maxProgress?: number;
-}
+import { getInitialStats, saveStats, updateStatsAfterSession, UserStats as GamificationStats, Achievement } from '../utils/gamification';
 
 const UserProfilePage: React.FC = () => {
   const { 
@@ -46,10 +29,10 @@ const UserProfilePage: React.FC = () => {
     updateProfile 
   } = useAuth();
   
-  const { isDarkMode } = useSettings();
+  const { isDarkMode, getCurrentTimerPreset, timerSettings } = useSettings();
   
   const navigate = useNavigate();
-  const [stats, setStats] = useState<UserStats | null>(null);
+  const [stats, setStats] = useState<GamificationStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -58,57 +41,7 @@ const UserProfilePage: React.FC = () => {
     bio: ''
   });
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [memberSinceDate, setMemberSinceDate] = useState<Date>(new Date());
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Mock data for demonstration
-  const mockStats: UserStats = {
-    totalFocusHours: 47.5,
-    highestStreak: 12,
-    totalPoints: 2850,
-    sessionsCompleted: 114,
-    averageSessionLength: 25,
-    currentStreak: 5
-  };
-
-  const achievements: Achievement[] = [
-    {
-      id: '1',
-      title: 'Focus Master',
-      description: 'Complete 100 focus sessions',
-      icon: <Target className="w-5 h-5" />,
-      unlocked: true,
-      progress: 114,
-      maxProgress: 100
-    },
-    {
-      id: '2',
-      title: 'Streak Champion',
-      description: 'Maintain a 7-day streak',
-      icon: <Zap className="w-5 h-5" />,
-      unlocked: true,
-      progress: 5,
-      maxProgress: 7
-    },
-    {
-      id: '3',
-      title: 'Time Warrior',
-      description: 'Accumulate 50 focus hours',
-      icon: <Clock className="w-5 h-5" />,
-      unlocked: false,
-      progress: 47.5,
-      maxProgress: 50
-    },
-    {
-      id: '4',
-      title: 'Point Collector',
-      description: 'Earn 5000 points',
-      icon: <Star className="w-5 h-5" />,
-      unlocked: false,
-      progress: 2850,
-      maxProgress: 5000
-    }
-  ];
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -116,11 +49,9 @@ const UserProfilePage: React.FC = () => {
       return;
     }
 
-    // Simulate loading stats
-    setTimeout(() => {
-      setStats(mockStats);
-      setLoadingStats(false);
-    }, 1000);
+    const userStats = getInitialStats();
+    setStats(userStats);
+    setLoadingStats(false);
 
     // Set initial form data
     if (user) {
@@ -129,17 +60,43 @@ const UserProfilePage: React.FC = () => {
         email: user.email || '',
         bio: 'Passionate about productivity and personal growth.'
       });
-      setMemberSinceDate(new Date(user?.metadata?.creationTime || Date.now()));
     }
   }, [isAuthenticated, navigate, user]);
 
   useEffect(() => {
-    console.log('=== memberSinceDate EFFECT TRIGGERED ===');
-    console.log('New memberSinceDate:', memberSinceDate);
-    console.log('Formatted date:', memberSinceDate.toLocaleDateString());
-    console.log('Date object type:', typeof memberSinceDate);
-    console.log('Is valid date:', !isNaN(memberSinceDate.getTime()));
-  }, [memberSinceDate]);
+    const handleSessionComplete = () => {
+      console.log('=== SESSION COMPLETE EVENT RECEIVED ===');
+      console.log('Current stats:', stats);
+      
+      if (stats) {
+        const preset = getCurrentTimerPreset();
+        const sessionDuration = preset.id === 'custom' 
+          ? timerSettings.customWorkDuration / 60 // Convert seconds to minutes
+          : preset.workDuration / 60; // Convert seconds to minutes
+        
+        console.log('Session duration:', sessionDuration);
+        
+        const updatedStats = updateStatsAfterSession(stats, sessionDuration);
+        console.log('Updated stats:', updatedStats);
+        
+        setStats(updatedStats);
+        saveStats(updatedStats);
+        
+        // Force a re-render by updating the state
+        setTimeout(() => {
+          console.log('Stats after timeout:', updatedStats);
+        }, 100);
+      }
+    };
+
+    // Listen for custom event from timer
+    console.log('Setting up sessionComplete event listener');
+    window.addEventListener('sessionComplete', handleSessionComplete);
+    return () => {
+      console.log('Cleaning up sessionComplete event listener');
+      window.removeEventListener('sessionComplete', handleSessionComplete);
+    };
+  }, [stats]); // Only depend on stats, not on settings functions
 
   const handleEditToggle = () => {
     if (isEditing) {
@@ -189,45 +146,11 @@ const UserProfilePage: React.FC = () => {
     fileInputRef.current?.click();
   };
 
-  const handleMemberSinceChange = (newDate: string) => {
-    console.log('=== HANDLE MEMBER SINCE CHANGE ===');
-    console.log('Input newDate:', newDate);
-    
-    try {
-      const parsedDate = new Date(newDate);
-      console.log('Parsed date object:', parsedDate);
-      console.log('Is valid date:', !isNaN(parsedDate.getTime()));
-      
-      if (isNaN(parsedDate.getTime())) {
-        console.log('Invalid date - showing alert');
-        alert('Invalid date. Please enter a valid date in YYYY-MM-DD format.');
-        return;
-      }
-      
-      const today = new Date();
-      console.log('Today:', today);
-      console.log('Is future date:', parsedDate > today);
-      
-      if (parsedDate > today) {
-        console.log('Future date - showing alert');
-        alert('Member since date cannot be in the future.');
-        return;
-      }
-      
-      console.log('About to setMemberSinceDate with:', parsedDate);
-      console.log('Current memberSinceDate before update:', memberSinceDate);
-      setMemberSinceDate(parsedDate);
-      console.log('setMemberSinceDate called');
-    } catch (error) {
-      console.error('Error in handleMemberSinceChange:', error);
-      alert('Error updating date. Please try again.');
-    }
-  };
 
   const getActivityLevel = () => {
     if (!stats) return { level: 'Beginner', color: 'from-gray-500 to-gray-600', percentage: 0 };
     
-    const points = stats.totalPoints;
+    const points = stats.focusPoints;
     if (points < 1000) return { level: 'Beginner', color: 'from-gray-500 to-gray-600', percentage: (points / 1000) * 100 };
     if (points < 3000) return { level: 'Intermediate', color: 'from-blue-500 to-cyan-500', percentage: ((points - 1000) / 2000) * 100 };
     if (points < 5000) return { level: 'Advanced', color: 'from-purple-500 to-pink-500', percentage: ((points - 3000) / 2000) * 100 };
@@ -366,57 +289,7 @@ const UserProfilePage: React.FC = () => {
                     )}
                   </div>
                   
-                  <div className={`flex items-center text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                    <Calendar className="w-4 h-4 mr-2" />
-                    <span>Member since {memberSinceDate.toLocaleDateString()}</span>
-                    {isEditing && (
-                      <>
-                        <button
-                          onClick={() => {
-                            console.log('=== EDIT BUTTON CLICKED ===');
-                            console.log('Current memberSinceDate:', memberSinceDate);
-                            
-                            const currentDateStr = memberSinceDate.toISOString().split('T')[0];
-                            console.log('Current date string for prompt:', currentDateStr);
-                            
-                            const newDate = prompt('Enter join date (YYYY-MM-DD):', currentDateStr);
-                            console.log('User entered date:', newDate);
-                            
-                            // Always try to process the date if user entered anything
-                            if (newDate && newDate.trim() !== '') {
-                              console.log('Processing date input...');
-                              handleMemberSinceChange(newDate.trim());
-                            } else if (newDate === null) {
-                              console.log('User cancelled the prompt');
-                            } else {
-                              console.log('User entered empty string');
-                            }
-                          }}
-                          className={`ml-3 text-sm px-2 py-1 rounded transition-colors ${
-                            isDarkMode 
-                              ? 'text-indigo-400 hover:text-indigo-300 hover:bg-indigo-900/20' 
-                              : 'text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50'
-                          }`}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => {
-                            console.log('=== TEST BUTTON CLICKED ===');
-                            console.log('Setting date to 2023-01-01 directly');
-                            const testDate = new Date('2023-01-01');
-                            console.log('Test date object:', testDate);
-                            setMemberSinceDate(testDate);
-                            console.log('setMemberSinceDate called with test date');
-                          }}
-                          className={`ml-2 text-sm px-2 py-1 rounded transition-colors bg-green-500 text-white`}
-                        >
-                          Test (2023)
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
+                                  </div>
               </div>
             </div>
 
@@ -439,7 +312,7 @@ const UserProfilePage: React.FC = () => {
                   ></div>
                 </div>
                 <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  {stats?.totalPoints || 0} points • Next level at {activityLevel.level === 'Expert' ? '∞' : activityLevel.level === 'Advanced' ? '5000' : activityLevel.level === 'Intermediate' ? '3000' : '1000'} points
+                  {stats?.focusPoints || 0} points • Next level at {activityLevel.level === 'Expert' ? '∞' : activityLevel.level === 'Advanced' ? '5000' : activityLevel.level === 'Intermediate' ? '3000' : '1000'} points
                 </p>
               </div>
             </div>
@@ -470,7 +343,7 @@ const UserProfilePage: React.FC = () => {
                         <Clock className="w-5 h-5 text-blue-600 mr-3" />
                         <span className={`font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Focus Hours</span>
                       </div>
-                      <span className="text-xl font-bold text-blue-600">{stats?.totalFocusHours.toFixed(1)}</span>
+                      <span className="text-xl font-bold text-blue-600">{stats ? Math.floor(stats.totalFocusTime / 60) : 0}h</span>
                     </div>
                   </div>
                   
@@ -482,7 +355,7 @@ const UserProfilePage: React.FC = () => {
                         <TrendingUp className="w-5 h-5 text-green-600 mr-3" />
                         <span className={`font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Current Streak</span>
                       </div>
-                      <span className="text-xl font-bold text-green-600">{stats?.currentStreak} days</span>
+                      <span className="text-xl font-bold text-green-600">{stats?.currentStreak || 0} days</span>
                     </div>
                   </div>
                   
@@ -494,7 +367,7 @@ const UserProfilePage: React.FC = () => {
                         <Award className="w-5 h-5 text-purple-600 mr-3" />
                         <span className={`font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Total Points</span>
                       </div>
-                      <span className="text-xl font-bold text-purple-600">{stats?.totalPoints}</span>
+                      <span className="text-xl font-bold text-purple-600">{stats?.focusPoints || 0}</span>
                     </div>
                   </div>
                   
@@ -506,7 +379,7 @@ const UserProfilePage: React.FC = () => {
                         <Target className="w-5 h-5 text-orange-600 mr-3" />
                         <span className={`font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Sessions</span>
                       </div>
-                      <span className="text-xl font-bold text-orange-600">{stats?.sessionsCompleted}</span>
+                      <span className="text-xl font-bold text-orange-600">{stats?.totalSessions || 0}</span>
                     </div>
                   </div>
                 </div>
@@ -522,7 +395,7 @@ const UserProfilePage: React.FC = () => {
                 Achievements
               </h3>
               <div className="space-y-3">
-                {achievements.map((achievement) => (
+                {stats?.achievements.map((achievement) => (
                   <div 
                     key={achievement.id}
                     className={`p-3 rounded-xl border ${
@@ -538,7 +411,7 @@ const UserProfilePage: React.FC = () => {
                             ? 'bg-yellow-500 text-white' 
                             : isDarkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-300 text-gray-600'
                         }`}>
-                          {achievement.icon}
+                          <span className="text-lg">{achievement.icon}</span>
                         </div>
                         <div>
                           <h4 className={`font-medium text-sm ${
@@ -552,22 +425,6 @@ const UserProfilePage: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    
-                    {achievement.progress !== undefined && achievement.maxProgress && (
-                      <div className="mt-2">
-                        <div className={`w-full rounded-full h-2 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                          <div 
-                            className={`h-2 rounded-full transition-all duration-500 ${
-                              achievement.unlocked ? 'bg-yellow-500' : 'bg-gray-400'
-                            }`}
-                            style={{ width: `${Math.min((achievement.progress / achievement.maxProgress) * 100, 100)}%` }}
-                          ></div>
-                        </div>
-                        <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                          {achievement.progress} / {achievement.maxProgress}
-                        </p>
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>

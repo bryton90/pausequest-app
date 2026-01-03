@@ -58,6 +58,32 @@ export const useSound = ({ enabled, volume = 0.5 }: UseSoundProps) => {
     oscillator.stop(audioContext.currentTime + 0.5);
   };
 
+  const playEscalation = () => {
+    if (!enabled) return;
+    
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    // Create urgent beeping pattern for time escalation
+    oscillator.frequency.value = 1200; // High pitch for urgency
+    oscillator.type = 'square'; // Harsher tone for alert
+    
+    // Create rapid beeping effect
+    const currentTime = audioContext.currentTime;
+    gainNode.gain.setValueAtTime(0, currentTime);
+    gainNode.gain.setValueAtTime(volume * 0.6, currentTime + 0.05);
+    gainNode.gain.setValueAtTime(0, currentTime + 0.1);
+    gainNode.gain.setValueAtTime(volume * 0.6, currentTime + 0.15);
+    gainNode.gain.setValueAtTime(0, currentTime + 0.2);
+    
+    oscillator.start(currentTime);
+    oscillator.stop(currentTime + 0.25);
+  };
+
   const enableTicking = (enable: boolean) => {
     setIsTickingEnabled(enable);
   };
@@ -65,6 +91,7 @@ export const useSound = ({ enabled, volume = 0.5 }: UseSoundProps) => {
   return {
     playTick,
     playAlarm,
+    playEscalation,
     enableTicking,
     isTickingEnabled,
   };

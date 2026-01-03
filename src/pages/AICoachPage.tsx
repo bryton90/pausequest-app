@@ -1,7 +1,12 @@
-import React, { useState } from 'react';
-import { Brain, MessageCircle, Sparkles, TrendingUp, Target, Zap } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Brain, MessageCircle, Sparkles, TrendingUp, Target, Zap, Trophy, Flame, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSettings } from '../contexts/SettingsContext';
+import { getInitialStats, UserStats } from '../utils/gamification';
+import { mlPatternAnalysisService, UserBehaviorProfile, MLInsight } from '../services/mlPatternAnalysisService';
+import { nlpService, QueryAnalysis, ConversationContext } from '../services/nlpService';
+import { adaptiveLearningService, RecommendationScore } from '../services/adaptiveLearningService';
+import { Session } from '../api/breakService';
 
 interface AICoachMessage {
   id: string;
@@ -21,47 +26,163 @@ interface AIInsight {
 const AICoachPage: React.FC = () => {
   const { isDarkMode } = useSettings();
   const navigate = useNavigate();
+  const [stats, setStats] = useState<UserStats | null>(null);
+  const [userProfile, setUserProfile] = useState<UserBehaviorProfile | null>(null);
   const [messages, setMessages] = useState<AICoachMessage[]>([
     {
       id: '1',
       type: 'coach',
-      content: "Hi! I'm your AI productivity coach. I can help you optimize your focus sessions, analyze your patterns, and provide personalized recommendations. How can I assist you today?",
+      content: "🧠 Welcome to your AI-Powered Focus Mastery Hub! I'm using machine learning to analyze your patterns and provide personalized insights. Ready to discover your productivity archetype?",
       timestamp: new Date()
     }
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [conversationHistory, setConversationHistory] = useState<QueryAnalysis[]>([]);
+  const [currentMood, setCurrentMood] = useState<string>('');
+  const [isMLLoading, setIsMLLoading] = useState(true);
 
-  const aiInsights: AIInsight[] = [
-    {
-      id: '1',
-      title: 'Peak Performance Time',
-      description: 'Your most productive hours are 9-11 AM. Schedule important focus sessions during this time.',
-      icon: <TrendingUp className="w-5 h-5" />,
-      type: 'productivity'
-    },
-    {
-      id: '2',
-      title: 'Focus Pattern Detected',
-      description: 'You maintain focus better with 25-minute sessions. Consider sticking to Pomodoro technique.',
-      icon: <Target className="w-5 h-5" />,
-      type: 'focus'
-    },
-    {
-      id: '3',
-      title: 'Wellness Reminder',
-      description: 'You\'ve been working for 2 hours. Time for a longer break to recharge.',
-      icon: <Brain className="w-5 h-5" />,
-      type: 'wellness'
-    },
-    {
-      id: '4',
-      title: 'Achievement Unlocked',
-      description: 'You\'ve completed 10 focus sessions this week! Keep up the great momentum.',
-      icon: <Sparkles className="w-5 h-5" />,
-      type: 'achievement'
+  // Load real user stats and initialize ML analysis
+  useEffect(() => {
+    const userStats = getInitialStats();
+    setStats(userStats);
+    
+    // Initialize ML analysis with mock session data
+    initializeMLAnalysis();
+  }, []);
+
+  // Initialize ML analysis
+  const initializeMLAnalysis = async () => {
+    setIsMLLoading(true);
+    
+    try {
+      // Create mock session data based on user stats
+      const mockSessions = generateMockSessions(stats);
+      
+      // Analyze user behavior patterns
+      const profile = mlPatternAnalysisService.analyzeUserBehavior(mockSessions, 'user-1');
+      setUserProfile(profile);
+      
+      // Add ML insights to conversation
+      if (profile.insights.length > 0) {
+        const insightMessage: AICoachMessage = {
+          id: 'ml-insights',
+          type: 'coach',
+          content: `🤖 **ML Analysis Complete!**\n\nI've analyzed your patterns and identified you as a **${profile.archetype.name}**.\n\n**Key Insights:**\n${profile.insights.slice(0, 2).map(insight => `• ${insight.title}: ${insight.description}`).join('\n')}\n\nAsk me anything about your productivity patterns!`,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, insightMessage]);
+      }
+    } catch (error) {
+      console.error('ML Analysis failed:', error);
+    } finally {
+      setIsMLLoading(false);
     }
-  ];
+  };
+
+  // Generate mock session data based on stats
+  const generateMockSessions = (userStats: UserStats | null): Session[] => {
+    if (!userStats || userStats.totalSessions === 0) return [];
+    
+    const sessions: Session[] = [];
+    const now = new Date();
+    
+    for (let i = 0; i < Math.min(userStats.totalSessions, 50); i++) {
+      const sessionDate = new Date(now.getTime() - (i * 24 * 60 * 60 * 1000)); // Past sessions
+      const focusDuration = 25 * 60 + Math.random() * 20 * 60; // 25-45 minutes
+      const breakDuration = 5 * 60 + Math.random() * 10 * 60; // 5-15 minutes
+      
+      sessions.push({
+        id: i,
+        userId: 'demo-user',
+        date: sessionDate.toISOString(),
+        focus_duration: focusDuration,
+        break_duration: breakDuration,
+        notes: '',
+        timestamp: sessionDate.toISOString(),
+        streakCount: Math.floor(Math.random() * 10) + 1,
+        totalPoints: Math.floor(Math.random() * 100) + 10,
+        sentiment_score: Math.random() * 0.4 + 0.6 // 0.6-1.0
+      });
+    }
+    
+    return sessions;
+  };
+
+  // Generate personalized insights based on real stats
+  const generatePersonalizedInsights = (): AIInsight[] => {
+    if (!stats) return [];
+
+    const insights: AIInsight[] = [];
+    
+    // Focus time insight
+    if (stats.totalFocusTime > 0) {
+      const hours = Math.floor(stats.totalFocusTime / 60);
+      const minutes = stats.totalFocusTime % 60;
+      insights.push({
+        id: 'focus-time',
+        title: '🔥 Focus Warrior',
+        description: `You've accumulated ${hours}h ${minutes}min of deep focus! ${hours >= 10 ? "That's serious dedication!" : "Keep building this momentum!"}`,
+        icon: <Clock className="w-5 h-5" />,
+        type: 'focus'
+      });
+    }
+
+    // Streak insight
+    if (stats.currentStreak > 0) {
+      let streakMessage = "";
+      if (stats.currentStreak >= 7) {
+        streakMessage = "Incredible! You're on a week-long streak!";
+      } else if (stats.currentStreak >= 3) {
+        streakMessage = "Great momentum! Keep this streak going!";
+      } else {
+        streakMessage = "Nice start! Let's build this into a habit.";
+      }
+      insights.push({
+        id: 'streak',
+        title: '🔥 Streak Master',
+        description: `${stats.currentStreak} day streak! ${streakMessage}`,
+        icon: <Flame className="w-5 h-5" />,
+        type: 'achievement'
+      });
+    }
+
+    // Session consistency insight
+    if (stats.totalSessions >= 5) {
+      const avgSessionLength = Math.round(stats.totalFocusTime / stats.totalSessions);
+      insights.push({
+        id: 'consistency',
+        title: '⚡ Consistency King',
+        description: `${stats.totalSessions} sessions completed! Your average session is ${avgSessionLength} minutes. ${avgSessionLength >= 20 ? "Perfect for deep work!" : "Try longer sessions for better flow states."}`,
+        icon: <Trophy className="w-5 h-5" />,
+        type: 'productivity'
+      });
+    }
+
+    // Productivity pattern insight
+    if (stats.focusPoints > 0) {
+      insights.push({
+        id: 'points',
+        title: '💎 Point Collector',
+        description: `${stats.focusPoints} productivity points earned! ${stats.focusPoints >= 100 ? "You're in the top tier of focus masters!" : "Every point counts toward your mastery journey!"}`,
+        icon: <Sparkles className="w-5 h-5" />,
+        type: 'achievement'
+      });
+    }
+
+    // Wellness insight (if they've been working a lot)
+    if (stats.totalFocusTime > 120) { // More than 2 hours
+      insights.push({
+        id: 'wellness',
+        title: '🧘 Wellness Alert',
+        description: "You've been crushing it! Remember to take breaks and stay hydrated. Your brain needs rest to perform at its best.",
+        icon: <Brain className="w-5 h-5" />,
+        type: 'wellness'
+      });
+    }
+
+    return insights;
+  };
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
@@ -77,12 +198,22 @@ const AICoachPage: React.FC = () => {
     setInputMessage('');
     setIsTyping(true);
 
-    // Simulate AI response
+    // Analyze user query with NLP
+    const queryAnalysis = nlpService.analyzeQuery(inputMessage, {
+      previousQueries: conversationHistory,
+      userProfile: userProfile || undefined,
+      currentMood: currentMood || undefined
+    } as ConversationContext);
+
+    // Update conversation history
+    setConversationHistory(prev => [...prev, queryAnalysis]);
+
+    // Generate ML-enhanced response
     setTimeout(() => {
       const coachResponse: AICoachMessage = {
         id: (Date.now() + 1).toString(),
         type: 'coach',
-        content: generateAIResponse(inputMessage),
+        content: generateMLEnhancedResponse(queryAnalysis),
         timestamp: new Date()
       };
       setMessages(prev => [...prev, coachResponse]);
@@ -90,26 +221,76 @@ const AICoachPage: React.FC = () => {
     }, 1500);
   };
 
-  const generateAIResponse = (userInput: string): string => {
-    const input = userInput.toLowerCase();
-    
-    if (input.includes('focus') || input.includes('concentrate')) {
-      return "Based on your patterns, I recommend using the Pomodoro technique with 25-minute focus sessions. Make sure to eliminate distractions by putting your phone on silent and closing unnecessary tabs. Would you like specific tips for your work environment?";
+  // Generate ML-enhanced response
+  const generateMLEnhancedResponse = (queryAnalysis: QueryAnalysis): string => {
+    if (!userProfile) {
+      return "I'm still analyzing your patterns. Start a few focus sessions and I'll provide personalized insights!";
     }
-    
-    if (input.includes('break') || input.includes('rest')) {
-      return "Breaks are crucial for maintaining productivity! I've noticed you work well with 5-minute breaks between sessions. Try stretching, walking around, or doing some quick breathing exercises during these breaks. How does your current break routine feel?";
+
+    const { intent } = queryAnalysis;
+    const sentiment = queryAnalysis.intent.sentiment;
+    const entities = queryAnalysis.intent.entities;
+    let response = '';
+
+    // Use ML insights to generate response
+    const relevantInsights = userProfile.insights.filter(insight => 
+      insight.type === 'recommendation' || 
+      (insight.type === 'pattern' && intent.confidence > 0.7)
+    );
+
+    // Generate response based on intent and ML insights
+    switch (intent.type) {
+      case 'productivity':
+        response = `📈 **Productivity Analysis**\n\nBased on your ${userProfile.archetype.name} profile: ${userProfile.archetype.description}\n\n**Personalized Recommendations:**\n${userProfile.archetype.recommendations.slice(0, 3).map(rec => `• ${rec}`).join('\n')}`;
+        
+        if (relevantInsights.length > 0 && relevantInsights[0]) {
+          response += `\n\n**Recent Insights:**\n${relevantInsights[0].description}`;
+        }
+        break;
+
+      case 'wellness':
+        response = `🧘 **Wellness Intelligence**\n\nI've analyzed your patterns and wellness indicators: ${userProfile.insights.filter(i => i.type === 'anomaly').length > 0 ? 'Some areas need attention' : 'Your patterns look healthy!'}\n\n**For your ${userProfile.archetype.name} style:**`;
+        
+        // Add wellness-specific recommendations
+        if (sentiment.label === 'negative') {
+          response += '\n• Consider taking a recovery break\n• Your current patterns suggest high stress';
+        } else {
+          response += '\n• Maintain your current routine\n• Your wellness indicators are positive';
+        }
+        break;
+
+      case 'focus':
+        response = `🎯 **Focus Optimization**\n\nAs a ${userProfile.archetype.name}, your focus patterns show: ${userProfile.patterns.filter(p => p.type === 'session-based').length > 0 ? 'Strong session consistency' : 'Room for improvement'}\n\n**ML-Recommended Strategies:**`;
+        
+        // Add focus-specific insights
+        const focusInsights = userProfile.insights.filter(i => i.type === 'pattern' && i.title.toLowerCase().includes('focus'));
+        if (focusInsights.length > 0 && focusInsights[0]) {
+          // For now, use a generic message since MLInsight doesn't have implications
+          response += `\n• Focus pattern detected: ${focusInsights[0].title}\n• Recommendation: ${focusInsights[0].description}`;
+        }
+        break;
+
+      case 'help':
+        response = `🤖 **AI Coach Capabilities**\n\nI can provide:\n• **Pattern Analysis**: Your productivity archetype and behavioral patterns\n• **Predictive Insights**: When you'll be most productive\n• **Personalized Recommendations**: Based on your unique work style\n• **Real-time Guidance**: Context-aware suggestions\n\n**Your Current Profile:** ${userProfile.archetype.name}\n**Confidence Level**: ${Math.round(userProfile.insights.reduce((acc, i) => acc + i.confidence, 0) / userProfile.insights.length * 100)}%\n\nWhat would you like to explore?`;
+        break;
+
+      default:
+        response = `🧠 **Intelligent Analysis**\n\nI understand you're interested in ${intent.type}. Based on your ${userProfile.archetype.name} profile and current patterns:\n\n**Key Metrics:**\n• Pattern Confidence: ${Math.round(userProfile.insights.reduce((acc, i) => acc + i.confidence, 0) / userProfile.insights.length * 100)}%\n• Identified Patterns: ${userProfile.patterns.length}\n• Active Recommendations: ${userProfile.insights.filter(i => i.actionable).length}\n\nAsk me for specific recommendations!`;
     }
-    
-    if (input.includes('productivity') || input.includes('efficient')) {
-      return "Your productivity has increased by 15% this week! You're doing great. To continue this trend, consider scheduling your most important tasks during your peak hours (9-11 AM). What specific aspect of productivity would you like to improve?";
+
+    // Add sentiment-aware closing
+    if (sentiment.label === 'negative') {
+      response += '\n\nI notice you might be feeling frustrated. I\'m here to help you turn things around with data-driven strategies.';
+    } else if (sentiment.label === 'positive') {
+      response += '\n\nGreat attitude! Let\'s build on this positive momentum.';
     }
-    
-    if (input.includes('tired') || input.includes('fatigue')) {
-      return "It sounds like you might be experiencing some fatigue. This is completely normal! Consider taking a longer break (15-20 minutes) and ensure you're staying hydrated. I've also noticed that sessions after 3 PM tend to be less productive for you. How are you feeling right now?";
+
+    // Add entity-specific information
+    if (entities.length > 0) {
+      response += '\n\n**Context:** I detected ' + entities.map((e: any) => `${e.type}: ${e.value}`).join(', ');
     }
-    
-    return "That's a great question! Based on your focus session data, I can provide personalized advice. Could you tell me more about what specific challenge or goal you're working on? I'm here to help you optimize your productivity and well-being.";
+
+    return response;
   };
 
   const getInsightColor = (type: AIInsight['type']) => {
@@ -136,7 +317,17 @@ const AICoachPage: React.FC = () => {
         const tipMessage: AICoachMessage = {
           id: Date.now().toString(),
           type: 'coach',
-          content: "Here are my top focus tips for you:\n\n1. 🎯 Use the Pomodoro Technique (25min focus, 5min break)\n2. 📱 Put your phone in another room\n3. 🎵 Use instrumental music or white noise\n4. 💧 Stay hydrated and keep snacks nearby\n5. 🌿 Take short walks between sessions\n\nWhich tip would you like to explore further?",
+          content: `🚀 Here are your personalized power tips:\n\n${stats ? 
+            `Based on your ${stats.totalSessions} completed sessions:\n` + 
+            (stats.totalFocusTime > 60 ? 
+              `🔥 You're a focus warrior! Keep up those ${Math.floor(stats.totalFocusTime / 60)}h+ sessions!\n` : 
+              `💪 Great start! Every session builds your focus muscle.\n`) +
+            (stats.currentStreak > 0 ? 
+              `⚡ Your ${stats.currentStreak}-day streak is building momentum!\n` : 
+              `🎯 Let's build your first streak starting today!\n`)
+          : 
+            "🎯 Start your focus journey with these tips:\n"
+          }\n\n💎 **Pro Strategies:**\n1. 🍅 Pomodoro Power: 25min focus, 5min break\n2. 📱 Phone Detox: Put it in another room\n3. 🎵 Focus Sounds: Instrumental music or white noise\n4. 💧 Fuel Up: Water and healthy snacks ready\n5. 🌿 Active Breaks: Stretch or walk between sessions.\n\nWhich tip will you master first?`,
           timestamp: new Date()
         };
         setMessages(prev => [...prev, tipMessage]);
@@ -161,9 +352,9 @@ const AICoachPage: React.FC = () => {
             </div>
           </div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
-            AI Productivity Coach
+            🚀 Focus Mastery Hub
           </h1>
-          <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>Your personal assistant for optimal focus and well-being</p>
+          <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>Level up your productivity with AI-powered insights</p>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
@@ -176,7 +367,7 @@ const AICoachPage: React.FC = () => {
               <div className="bg-gradient-to-r from-indigo-500 to-purple-500 p-4 text-white">
                 <div className="flex items-center space-x-3">
                   <MessageCircle className="w-6 h-6" />
-                  <h2 className="text-lg font-semibold">Coach Conversation</h2>
+                  <h2 className="text-lg font-semibold">⚡ Strategy Chat</h2>
                 </div>
               </div>
 
@@ -247,24 +438,32 @@ const AICoachPage: React.FC = () => {
             }`}>
               <h3 className={`text-lg font-bold mb-4 flex items-center ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
                 <Sparkles className="w-5 h-5 mr-2 text-yellow-500" />
-                Personalized Insights
+                🎯 Your Performance Insights
               </h3>
               <div className="space-y-3">
-                {aiInsights.map((insight) => (
-                  <div key={insight.id} className={`p-4 rounded-xl border ${
-                    isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'
-                  }`}>
-                    <div className="flex items-start space-x-3">
-                      <div className={`p-2 rounded-lg bg-gradient-to-r ${getInsightColor(insight.type)} text-white`}>
-                        {insight.icon}
-                      </div>
-                      <div className="flex-1">
-                        <h4 className={`font-semibold text-sm mb-1 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>{insight.title}</h4>
-                        <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{insight.description}</p>
+                {generatePersonalizedInsights().length > 0 ? (
+                  generatePersonalizedInsights().map((insight) => (
+                    <div key={insight.id} className={`p-4 rounded-xl border ${
+                      isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'
+                    }`}>
+                      <div className="flex items-start space-x-3">
+                        <div className={`p-2 rounded-lg bg-gradient-to-r ${getInsightColor(insight.type)} text-white`}>
+                          {insight.icon}
+                        </div>
+                        <div className="flex-1">
+                          <h4 className={`font-semibold text-sm mb-1 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>{insight.title}</h4>
+                          <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{insight.description}</p>
+                        </div>
                       </div>
                     </div>
+                  ))
+                ) : (
+                  <div className={`text-center py-8 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                    <Brain className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p className="text-sm">Start some focus sessions to unlock personalized insights!</p>
+                    <p className="text-xs mt-1">I'll analyze your patterns and give you custom strategies.</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
@@ -274,7 +473,7 @@ const AICoachPage: React.FC = () => {
             }`}>
               <h3 className={`text-lg font-bold mb-4 flex items-center ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
                 <Zap className="w-5 h-5 mr-2 text-indigo-500" />
-                Quick Actions
+                ⚡ Power Actions
               </h3>
               <div className="space-y-3">
                 <button 
@@ -285,7 +484,7 @@ const AICoachPage: React.FC = () => {
                       : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
                   }`}
                 >
-                  📊 View Productivity Report
+                  📊 Check Your Stats
                 </button>
                 <button 
                   onClick={() => handleQuickAction('optimize-schedule')}
@@ -295,7 +494,7 @@ const AICoachPage: React.FC = () => {
                       : 'bg-green-100 text-green-700 hover:bg-green-200'
                   }`}
                 >
-                  🎯 Optimize Session Schedule
+                  🎯 Start Focus Session
                 </button>
                 <button 
                   onClick={() => handleQuickAction('focus-tips')}
@@ -305,7 +504,7 @@ const AICoachPage: React.FC = () => {
                       : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
                   }`}
                 >
-                  💡 Get Focus Tips
+                  💡 Get Pro Tips
                 </button>
               </div>
             </div>

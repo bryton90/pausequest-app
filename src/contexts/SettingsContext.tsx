@@ -311,9 +311,18 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   // Get current timer preset
   const getCurrentTimerPreset = useCallback((): TimerPreset => {
+    if (settings.timerSettings.preset === 'custom') {
+      return {
+        id: 'custom',
+        name: 'Custom',
+        workDuration: settings.timerSettings.customWorkDuration,
+        breakDuration: settings.timerSettings.customBreakDuration
+      };
+    }
+    
     const preset = timerPresets.find(p => p.id === settings.timerSettings.preset);
     return preset || timerPresets.find(p => p.id === 'pomodoro') || timerPresets[0]!; // Fallback with non-null assertion
-  }, [settings.timerSettings.preset]);
+  }, [settings.timerSettings.preset, settings.timerSettings.customWorkDuration, settings.timerSettings.customBreakDuration]);
 
   // Check if we're in dark mode
   const isDarkMode = useMemo(() => {
