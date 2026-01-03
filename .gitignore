@@ -54,6 +54,9 @@ pausequest-backend/instance/
 *.db
 *.sqlite3
 
+# Environment variables
+pausequest-backend/.env
+
 # filepath: pausequest-app/
 *.venv/
 .windsurf

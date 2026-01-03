@@ -1,22 +1,25 @@
 from datetime import date
+import os
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+from dotenv import load_dotenv
 
 from extensions import db
 from models import User
 from middleware import token_required
 
+# Load environment variables
+load_dotenv()
+
 app = Flask(__name__)
 CORS(app)
 
-# ---------------------------------------------------------------------------
 # Configuration
-# ---------------------------------------------------------------------------
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///breaks.db"
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("SQLALCHEMY_DATABASE_URI", "sqlite:///breaks.db")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["SECRET_KEY"] = "change-me-in-prod"  # TODO: move to env var
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "fallback-secret-key-for-development")
 
 db.init_app(app)
 
