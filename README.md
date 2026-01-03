@@ -47,11 +47,6 @@ PauseQuest is a productivity web-app designed to help you manage your work sessi
 
 ---
 
-## Screenshot
-<img width="1408" height="768" alt="pausequest-screenshot" src="https://github.com/user-attachments/assets/c5f71d9b-4161-445e-a2b9-b4579302e702" />
-
-
----
 
 ## Contributing
 
