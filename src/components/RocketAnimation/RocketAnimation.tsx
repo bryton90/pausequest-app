@@ -184,7 +184,7 @@ const RocketAnimation: React.FC<RocketAnimationProps> = ({ percentage, isRunning
       {/* Progress indicator */}
       <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
         <motion.div
-          className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"
+          className="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full"
           initial={{ width: 0 }}
           animate={{ width: `${percentage}%` }}
           transition={{ duration: 0.5, ease: "easeOut" }}

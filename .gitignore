@@ -25,6 +25,35 @@ dist-ssr
 *.sln
 *.sw?
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Backend specific
+pausequest-backend/venv/
+pausequest-backend/__pycache__/
+pausequest-backend/instance/
+*.db
+*.sqlite3
+
 # filepath: pausequest-app/
 *.venv/
 .windsurf

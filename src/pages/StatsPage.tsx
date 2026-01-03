@@ -33,7 +33,7 @@ function StatsPage() {
 
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold text-gray-700 mb-2">Current Streak</h3>
-          <p className="text-3xl font-bold text-purple-600">{stats.currentStreak} days</p>
+          <p className="text-3xl font-bold text-green-600">{stats.currentStreak} days</p>
           <p className="text-sm text-gray-500 mt-1">in a row</p>
         </div>
       </div>

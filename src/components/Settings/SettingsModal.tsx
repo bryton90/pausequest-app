@@ -59,7 +59,7 @@ const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                 <div className="flex justify-between items-center mb-6">
                   <Dialog.Title
                     as="h2"
-                    className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent"
+                    className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent"
                   >
                     ⚙️ Settings
                   </Dialog.Title>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { User } from '../../contexts/AuthContext';
-import { FiEdit2, FiSave, FiX, FiUser, FiMail, FiInfo, FiCamera } from 'react-icons/fi';
+import { Edit2, Save, X, User as UserIcon, Mail, Info, Camera } from 'lucide-react';
 import './UserProfile.css';
 
 const UserProfile: React.FC = () => {
@@ -77,7 +77,7 @@ const UserProfile: React.FC = () => {
             onClick={() => setIsEditing(true)}
             aria-label="Edit profile"
           >
-            <FiEdit2 /> Edit
+            <Edit2 /> Edit
           </button>
         ) : (
           <div className="edit-actions">
@@ -86,14 +86,14 @@ const UserProfile: React.FC = () => {
               onClick={handleSubmit}
               aria-label="Save changes"
             >
-              <FiSave /> Save
+              <Save /> Save
             </button>
             <button 
               className="cancel-button"
               onClick={() => setIsEditing(false)}
               aria-label="Cancel editing"
             >
-              <FiX /> Cancel
+              <X /> Cancel
             </button>
           </div>
         )}
@@ -105,7 +105,7 @@ const UserProfile: React.FC = () => {
             <img src={previewImage || user.photoURL} alt={user.displayName || 'User'} className="avatar" />
           ) : (
             <div className="avatar-placeholder">
-              <FiUser size={48} />
+              <UserIcon size={48} />
             </div>
           )}
           {isEditing && (
@@ -118,7 +118,7 @@ const UserProfile: React.FC = () => {
                 style={{ display: 'none' }}
               />
               <button className="change-photo-button" onClick={handlePhotoUpload}>
-                <FiCamera /> Change Photo
+                <Camera /> Change Photo
               </button>
             </>
           )}
@@ -127,7 +127,7 @@ const UserProfile: React.FC = () => {
         <form onSubmit={handleSubmit} className="profile-form">
           <div className="form-group">
             <label htmlFor="displayName">
-              <FiUser className="input-icon" /> Display Name
+              <UserIcon className="input-icon" /> Display Name
             </label>
             {isEditing ? (
               <input
@@ -145,7 +145,7 @@ const UserProfile: React.FC = () => {
 
           <div className="form-group">
             <label htmlFor="email">
-              <FiMail className="input-icon" /> Email
+              <X className="h-4 w-4" /> Email
             </label>
             {isEditing ? (
               <input
@@ -164,7 +164,7 @@ const UserProfile: React.FC = () => {
 
           <div className="form-group">
             <label htmlFor="bio">
-              <FiInfo className="input-icon" /> Bio
+              <Info className="input-icon" /> Bio
             </label>
             {isEditing ? (
               <textarea

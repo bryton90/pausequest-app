@@ -68,10 +68,12 @@ export const createSession = async (session: SessionData): Promise<Session> => {
 };
 
 export const getSessionHistory = async (limit: number = 10): Promise<SessionHistoryResponse> => {
-  const response = await fetch(`${API_BASE_URL}/session-history?limit=${limit}`, {
+  const response = await fetch(`${API_BASE_URL}/api/session-history-public?limit=${limit}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
+      // Note: Using public endpoint for now - add authentication headers for production
+      // 'Authorization': `Bearer ${token}`,
     },
   });
 

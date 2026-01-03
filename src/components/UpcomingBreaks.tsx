@@ -1,6 +1,6 @@
 import React from 'react';
 import { useSmartScheduler } from '../contexts/SmartSchedulerContext';
-import { ClockIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
+import { Clock, CheckCircle, XCircle } from 'lucide-react';
 
 const UpcomingBreaks: React.FC = () => {
   const { upcomingBreaks, startBreak, skipBreak } = useSmartScheduler();
@@ -16,7 +16,7 @@ const UpcomingBreaks: React.FC = () => {
   return (
     <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg shadow p-4">
       <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3 flex items-center">
-        <ClockIcon className="h-5 w-5 mr-2 text-blue-500" />
+        <Clock className="h-5 w-5 mr-2 text-blue-500" />
         Upcoming Breaks
       </h3>
       
@@ -46,14 +46,14 @@ const UpcomingBreaks: React.FC = () => {
                 className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-full"
                 title="Start break now"
               >
-                <CheckCircleIcon className="h-5 w-5" />
+                <CheckCircle className="h-5 w-5" />
               </button>
               <button
                 onClick={() => skipBreak(breakItem.id)}
                 className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full"
                 title="Skip break"
               >
-                <XCircleIcon className="h-5 w-5" />
+                <XCircle className="h-5 w-5" />
               </button>
             </div>
           </div>

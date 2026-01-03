@@ -153,7 +153,7 @@ const UserProfilePage: React.FC = () => {
     const points = stats.focusPoints;
     if (points < 1000) return { level: 'Beginner', color: 'from-gray-500 to-gray-600', percentage: (points / 1000) * 100 };
     if (points < 3000) return { level: 'Intermediate', color: 'from-blue-500 to-cyan-500', percentage: ((points - 1000) / 2000) * 100 };
-    if (points < 5000) return { level: 'Advanced', color: 'from-purple-500 to-pink-500', percentage: ((points - 3000) / 2000) * 100 };
+    if (points < 5000) return { level: 'Advanced', color: 'from-green-500 to-emerald-500', percentage: ((points - 3000) / 2000) * 100 };
     return { level: 'Expert', color: 'from-yellow-500 to-orange-500', percentage: 100 };
   };
 
@@ -162,7 +162,7 @@ const UserProfilePage: React.FC = () => {
       <div className={`min-h-screen bg-gradient-to-br p-6 flex items-center justify-center ${
         isDarkMode 
           ? 'from-gray-900 via-gray-800 to-gray-900' 
-          : 'from-indigo-50 via-white to-purple-50'
+          : 'from-green-50 via-white to-green-50'
       }`}>
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
       </div>
@@ -175,17 +175,17 @@ const UserProfilePage: React.FC = () => {
     <div className={`min-h-screen bg-gradient-to-br p-6 ${
       isDarkMode 
         ? 'from-gray-900 via-gray-800 to-gray-900' 
-        : 'from-indigo-50 via-white to-purple-50'
+        : 'from-green-50 via-white to-green-50'
     }`}>
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex justify-center items-center mb-4">
-            <div className="p-3 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl text-white">
+            <div className="p-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl text-white">
               <User className="w-8 h-8" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-2">
             User Profile
           </h1>
           <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Manage your account and track your progress</p>
@@ -215,7 +215,7 @@ const UserProfilePage: React.FC = () => {
               <div className="grid md:grid-cols-3 gap-6">
                 {/* Avatar */}
                 <div className="text-center">
-                  <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-white text-3xl font-bold overflow-hidden">
+                  <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 flex items-center justify-center text-white text-3xl font-bold overflow-hidden">
                     {previewImage || user?.photoURL ? (
                       <img src={previewImage || user?.photoURL} alt={formData.name || 'User'} className="w-full h-full object-cover" />
                     ) : (
@@ -360,14 +360,14 @@ const UserProfilePage: React.FC = () => {
                   </div>
                   
                   <div className={`p-4 rounded-xl border ${
-                    isDarkMode ? 'bg-purple-900/30 border-purple-800' : 'bg-purple-50 border-purple-200'
+                    isDarkMode ? 'bg-green-900/30 border-green-800' : 'bg-green-50 border-green-200'
                   }`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
-                        <Award className="w-5 h-5 text-purple-600 mr-3" />
+                        <Award className="w-5 h-5 text-green-600 mr-3" />
                         <span className={`font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Total Points</span>
                       </div>
-                      <span className="text-xl font-bold text-purple-600">{stats?.focusPoints || 0}</span>
+                      <span className="text-xl font-bold text-green-600">{stats?.focusPoints || 0}</span>
                     </div>
                   </div>
                   

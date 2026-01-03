@@ -302,7 +302,7 @@ const AICoachPage: React.FC = () => {
     switch (type) {
       case 'productivity': return 'from-blue-500 to-cyan-500';
       case 'wellness': return 'from-green-500 to-emerald-500';
-      case 'focus': return 'from-purple-500 to-pink-500';
+      case 'focus': return 'from-green-500 to-emerald-500';
       case 'achievement': return 'from-yellow-500 to-orange-500';
       default: return 'from-gray-500 to-gray-600';
     }
@@ -346,17 +346,17 @@ const AICoachPage: React.FC = () => {
     <div className={`min-h-screen bg-gradient-to-br p-6 ${
       isDarkMode 
         ? 'from-gray-900 via-gray-800 to-gray-900' 
-        : 'from-indigo-50 via-white to-purple-50'
+        : 'from-green-50 via-white to-green-50'
     }`}>
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex justify-center items-center mb-4">
-            <div className="p-3 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl text-white">
+            <div className="p-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl text-white">
               <Brain className="w-8 h-8" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-2">
             🚀 Focus Mastery Hub
           </h1>
           <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>Level up your productivity with AI-powered insights</p>
@@ -369,7 +369,7 @@ const AICoachPage: React.FC = () => {
               isDarkMode ? 'border-white/10' : 'border-white/20'
             }`}>
               {/* Chat Header */}
-              <div className="bg-gradient-to-r from-indigo-500 to-purple-500 p-4 text-white">
+              <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-4 text-white">
                 <div className="flex items-center space-x-3">
                   <MessageCircle className="w-6 h-6" />
                   <h2 className="text-lg font-semibold">⚡ Strategy Chat</h2>
@@ -386,7 +386,7 @@ const AICoachPage: React.FC = () => {
                     <div
                       className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
                         message.type === 'user'
-                          ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white'
+                          ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white'
                           : isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-100 text-gray-800'
                       }`}
                     >
@@ -427,7 +427,7 @@ const AICoachPage: React.FC = () => {
                   <button
                     onClick={handleSendMessage}
                     disabled={!inputMessage.trim() || isTyping}
-                    className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl hover:from-indigo-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl hover:from-green-600 hover:to-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
                     <MessageCircle className="w-5 h-5" />
                   </button>
@@ -505,8 +505,8 @@ const AICoachPage: React.FC = () => {
                   onClick={() => handleQuickAction('focus-tips')}
                   className={`w-full px-4 py-3 rounded-xl hover:transition-colors text-left font-medium ${
                     isDarkMode 
-                      ? 'bg-purple-900/50 text-purple-300 hover:bg-purple-900/70'
-                      : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                      ? 'bg-green-900/50 text-green-300 hover:bg-green-900/70'
+                      : 'bg-green-100 text-green-700 hover:bg-green-200'
                   }`}
                 >
                   💡 Get Pro Tips

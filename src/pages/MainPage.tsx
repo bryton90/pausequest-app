@@ -68,7 +68,7 @@ const MainPage = () => {
         return (
           <div className="text-center mb-8">
             <div className="relative inline-block">
-              <div className="text-8xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4 tracking-tight">
+              <div className="text-8xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-4 tracking-tight">
                 {formatTime(state.timeLeft)}
               </div>
               <div className="relative text-4xl mb-2">
@@ -147,7 +147,7 @@ const MainPage = () => {
       default:
         return (
           <div className="text-center mb-8">
-            <div className="text-8xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4 tracking-tight">
+            <div className="text-8xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-4 tracking-tight">
               {formatTime(state.timeLeft)}
             </div>
             <div className="text-xl font-medium text-text-secondary">

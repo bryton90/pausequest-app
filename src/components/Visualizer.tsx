@@ -30,8 +30,8 @@ const timeOfDayColors = {
     secondary: 'from-pink-200 to-orange-200',
   },
   night: {
-    primary: 'from-indigo-600 to-purple-900',
-    secondary: 'from-purple-800 to-indigo-800',
+    primary: 'from-green-600 to-emerald-900',
+    secondary: 'from-green-800 to-emerald-800',
   },
 };
 

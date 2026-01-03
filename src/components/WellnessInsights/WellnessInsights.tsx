@@ -191,7 +191,7 @@ export const WellnessInsights: React.FC<WellnessInsightsProps> = ({
             <span className="text-2xl mb-1 block">☕</span>
             <span className="text-xs font-medium">Quick Break</span>
           </button>
-          <button className="p-3 bg-purple-50 dark:bg-purple-900/30 rounded-lg border border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors">
+          <button className="p-3 bg-green-50 dark:bg-green-900/30 rounded-lg border border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors">
             <span className="text-2xl mb-1 block">📊</span>
             <span className="text-xs font-medium">View Stats</span>
           </button>

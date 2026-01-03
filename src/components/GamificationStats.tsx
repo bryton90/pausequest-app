@@ -1,6 +1,6 @@
 import React from 'react';
 import { useGamification } from '../contexts/GamificationContext';
-import { TrophyIcon, SparklesIcon, BoltIcon, ChartBarIcon } from '@heroicons/react/24/outline';
+import { Trophy, Sparkles, Zap, BarChart } from 'lucide-react';
 
 const GamificationStats: React.FC = () => {
   const { stats } = useGamification();
@@ -22,7 +22,7 @@ const GamificationStats: React.FC = () => {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
       <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-        <TrophyIcon className="h-5 w-5 text-yellow-500 mr-2" />
+        <Trophy className="h-5 w-5 text-yellow-500 mr-2" />
         Your Progress
       </h2>
       
@@ -46,14 +46,14 @@ const GamificationStats: React.FC = () => {
         <div>
           <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalPoints}</div>
           <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center justify-center">
-            <SparklesIcon className="h-3 w-3 mr-1 text-yellow-400" />
+            <Sparkles className="h-3 w-3 mr-1 text-yellow-400" />
             Points
           </div>
         </div>
         <div>
           <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.currentStreak}</div>
           <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center justify-center">
-            <BoltIcon className="h-3 w-3 mr-1 text-yellow-400" />
+            <Zap className="h-3 w-3 mr-1 text-yellow-400" />
             Day Streak
           </div>
         </div>
@@ -62,7 +62,7 @@ const GamificationStats: React.FC = () => {
             {stats.achievements.filter(a => a.isUnlocked).length}/{stats.achievements.length}
           </div>
           <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center justify-center">
-            <ChartBarIcon className="h-3 w-3 mr-1 text-yellow-400" />
+            <BarChart className="h-3 w-3 mr-1 text-yellow-400" />
             Achievements
           </div>
         </div>

@@ -11,7 +11,7 @@ interface State {
 }
 
 export class ErrorBoundary extends Component<Props, State> {
-  public state: State = {
+  public override state: State = {
     hasError: false,
   };
 
@@ -19,11 +19,11 @@ export class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error };
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  public override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('Uncaught error:', error, errorInfo);
   }
 
-  public render() {
+  public override render() {
     if (this.state.hasError) {
       return this.props.fallback || (
         <div className="p-4 bg-red-100 text-red-700 rounded">
@@ -45,11 +45,15 @@ export class ErrorBoundary extends Component<Props, State> {
 
 export const withErrorBoundary = <P extends object>(
   Component: React.ComponentType<P>,
-  Fallback?: React.ComponentType
+  Fallback?: React.ComponentType<any>
 ) => {
-  return (props: P) => (
+  const WrappedComponent = (props: P) => (
     <ErrorBoundary fallback={Fallback ? <Fallback /> : undefined}>
       <Component {...props} />
     </ErrorBoundary>
   );
+  
+  WrappedComponent.displayName = `withErrorBoundary(${Component.displayName || Component.name})`;
+  
+  return WrappedComponent as React.ComponentType<P>;
 };

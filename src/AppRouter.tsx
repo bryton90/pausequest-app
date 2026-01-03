@@ -26,7 +26,6 @@ const HistoryPage = lazyWithRetry(() => import('./pages/HistoryPage'));
 const SettingsPage = lazyWithRetry(() => import('./pages/SettingsPage'));
 const UserProfilePage = lazyWithRetry(() => import('./pages/UserProfilePage'));
 const AICoachPage = lazyWithRetry(() => import('./pages/AICoachPage'));
-const TestPage = lazyWithRetry(() => import('./pages/TestPage'));
 const NotFoundPage = lazyWithRetry(() => import('./pages/NotFoundPage'));
 
 // Error fallback component
@@ -68,7 +67,6 @@ const AnimatedRoutes = () => {
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/profile" element={<UserProfilePage />} />
             <Route path="/ai-coach" element={<AICoachPage />} />
-            <Route path="/test" element={<TestPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>

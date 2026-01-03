@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import { RocketAnimation } from '../RocketAnimation/RocketAnimation';
+import RocketAnimation from '../RocketAnimation/RocketAnimation';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import { withErrorBoundary } from '../common/ErrorBoundary';
 
@@ -15,12 +15,14 @@ interface TimerProps {
   onReset: () => void;
   totalTime: number;
   animationType: 'battery' | 'rocket' | 'both';
+  notes?: string;
+  onNotesChange?: (notes: string) => void;
 }
 
 const CIRCLE_COLORS = {
-  focus: '#2563eb', // blue
-  elapsed: '#f3f4f6', // light gray
-  break: '#10b981', // green
+  focus: '#2E8B57', // Jungle Green
+  elapsed: '#E0F6E0', // Pale Pistachio
+  break: '#98FB98', // Dusty Mint
 };
 
 const TimerComponent: React.FC<TimerProps> = ({
@@ -31,6 +33,8 @@ const TimerComponent: React.FC<TimerProps> = ({
   onReset,
   totalTime,
   animationType,
+  notes = '',
+  onNotesChange,
 }) => {
   const [showAnimation, setShowAnimation] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -112,6 +116,31 @@ const TimerComponent: React.FC<TimerProps> = ({
           </div>
         </div>
       )}
+
+      {/* Notes Section - Always visible */}
+      <div className="w-full max-w-md border-t pt-6">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Session Notes</h3>
+        <label htmlFor="timer-notes" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          How are you feeling about this session?
+        </label>
+        <textarea
+          id="timer-notes"
+          rows={3}
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white resize-none"
+          placeholder="Take notes on how you're feeling, what's working well, or what you'd like to improve..."
+          value={notes}
+          onChange={(e) => onNotesChange?.(e.target.value)}
+          disabled={isRunning}
+        />
+        {isRunning && (
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Pause the timer to edit notes</p>
+        )}
+        {!isRunning && notes && (
+          <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-sm text-blue-700 dark:text-blue-300">
+            💡 Notes will be saved when you complete the session
+          </div>
+        )}
+      </div>
 
       {/* Control Buttons */}
       <div className="flex gap-4">

@@ -147,6 +147,36 @@ def log_break():
 
     return jsonify({"message": "Method not allowed"}), 405
 
+@app.route('/api/session-public', methods=['POST'])
+def create_session_public():
+    if request.method == 'POST':
+        data = request.json
+        
+        if not data or 'focus_duration' not in data or 'break_duration' not in data:
+            return jsonify({"error": "Invalid request body"}), 400
+
+        from datetime import date
+        
+        new_session = Session(
+            user_id=1,  # Default user for demo
+            date=date.today(),
+            focus_duration=data.get('focus_duration', 0),
+            break_duration=data.get('break_duration', 0),
+            mood_emoji=data.get('mood_emoji'),
+            notes=data.get('notes'),
+        )
+        db.session.add(new_session)
+        db.session.commit()
+
+        print(f"Created session: Focus {new_session.focus_duration}s, Break {new_session.break_duration}s")
+        
+        return jsonify({
+            "message": "Session created successfully!",
+            "session": new_session.to_dict()
+        }), 201
+
+    return jsonify({"message": "Method not allowed"}), 405
+
 @app.route('/api/session', methods=['POST'])
 @token_required
 def create_session(current_user):
@@ -175,6 +205,30 @@ def create_session(current_user):
             "message": "Session created successfully!",
             "session": new_session.to_dict()
         }), 201
+
+    return jsonify({"message": "Method not allowed"}), 405
+
+@app.route('/api/session-history-public', methods=['GET'])
+def get_session_history_public():
+    if request.method == 'GET':
+        limit = request.args.get('limit', 10, type=int)
+        
+        # For demo purposes, return all sessions (in production, you'd filter by user)
+        sessions = Session.query.order_by(Session.date.desc()).limit(limit).all()
+        
+        sessions_list = [session.to_dict() for session in sessions]
+        
+        # Calculate totals for donut chart
+        total_focus = sum(s.focus_duration for s in sessions)
+        total_break = sum(s.break_duration for s in sessions)
+        
+        return jsonify({
+            "sessions": sessions_list,
+            "totals": {
+                "focus_duration": total_focus,
+                "break_duration": total_break
+            }
+        }), 200
 
     return jsonify({"message": "Method not allowed"}), 405
 

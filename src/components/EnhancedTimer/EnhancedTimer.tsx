@@ -233,7 +233,7 @@ export const EnhancedTimer: React.FC<EnhancedTimerProps> = ({
           progress={progress}
           size={200}
           strokeWidth={12}
-          color={sessionType === 'focus' ? '#3B82F6' : '#10B981'}
+          color={sessionType === 'focus' ? '#2E8B57' : '#98FB98'}
         />
         
         <div className="absolute inset-0 flex flex-col items-center justify-center">

@@ -3,8 +3,8 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, Resp
 import { getSessionHistory, Session } from '@/api/breakService';
 
 const COLORS = {
-  focus: '#2563eb', // blue
-  break: '#10b981', // green
+  focus: '#2E8B57', // Jungle Green
+  break: '#98FB98', // Dusty Mint
 };
 
 interface SessionHistoryProps {

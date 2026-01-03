@@ -103,24 +103,24 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     
     // Update CSS variables for both light and dark themes
     if (isDark) {
-      root.style.setProperty('--bg-color', '#1f2937');
-      root.style.setProperty('--bg-secondary', '#374151');
-      root.style.setProperty('--bg-hover', '#4b5563');
-      root.style.setProperty('--text-primary', '#f9fafb');
+      root.style.setProperty('--bg-color', '#1a1a1a');
+      root.style.setProperty('--bg-secondary', '#2d2d2d');
+      root.style.setProperty('--bg-hover', '#3d3d3d');
+      root.style.setProperty('--text-primary', '#FAFAFA');
       root.style.setProperty('--text-secondary', '#d1d5db');
-      root.style.setProperty('--border-color', '#4b5563');
-      root.style.setProperty('--primary-color', '#6366f1');
-      root.style.setProperty('--primary-hover', '#4f46e5');
+      root.style.setProperty('--border-color', '#3d3d3d');
+      root.style.setProperty('--primary-color', '#98FB98');
+      root.style.setProperty('--primary-hover', '#2E8B57');
       root.classList.add('dark');
     } else {
-      root.style.setProperty('--bg-color', '#ffffff');
-      root.style.setProperty('--bg-secondary', '#f9fafb');
-      root.style.setProperty('--bg-hover', '#f3f4f6');
-      root.style.setProperty('--text-primary', '#1f2937');
+      root.style.setProperty('--bg-color', '#FAFAFA');
+      root.style.setProperty('--bg-secondary', '#E0F6E0');
+      root.style.setProperty('--bg-hover', '#98FB98');
+      root.style.setProperty('--text-primary', '#2F4F4F');
       root.style.setProperty('--text-secondary', '#6b7280');
-      root.style.setProperty('--border-color', '#e5e7eb');
-      root.style.setProperty('--primary-color', '#4f46e5');
-      root.style.setProperty('--primary-hover', '#4338ca');
+      root.style.setProperty('--border-color', '#E0F6E0');
+      root.style.setProperty('--primary-color', '#98FB98');
+      root.style.setProperty('--primary-hover', '#2E8B57');
       root.classList.remove('dark');
     }
     
@@ -137,24 +137,24 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     
     // Update CSS variables for both light and dark themes
     if (isDark) {
-      root.style.setProperty('--bg-color', '#1f2937');
-      root.style.setProperty('--bg-secondary', '#374151');
-      root.style.setProperty('--bg-hover', '#4b5563');
-      root.style.setProperty('--text-primary', '#f9fafb');
+      root.style.setProperty('--bg-color', '#1a1a1a');
+      root.style.setProperty('--bg-secondary', '#2d2d2d');
+      root.style.setProperty('--bg-hover', '#3d3d3d');
+      root.style.setProperty('--text-primary', '#FAFAFA');
       root.style.setProperty('--text-secondary', '#d1d5db');
-      root.style.setProperty('--border-color', '#4b5563');
-      root.style.setProperty('--primary-color', '#6366f1');
-      root.style.setProperty('--primary-hover', '#4f46e5');
+      root.style.setProperty('--border-color', '#3d3d3d');
+      root.style.setProperty('--primary-color', '#98FB98');
+      root.style.setProperty('--primary-hover', '#2E8B57');
       root.classList.add('dark');
     } else {
-      root.style.setProperty('--bg-color', '#ffffff');
-      root.style.setProperty('--bg-secondary', '#f9fafb');
-      root.style.setProperty('--bg-hover', '#f3f4f6');
-      root.style.setProperty('--text-primary', '#1f2937');
+      root.style.setProperty('--bg-color', '#FAFAFA');
+      root.style.setProperty('--bg-secondary', '#E0F6E0');
+      root.style.setProperty('--bg-hover', '#98FB98');
+      root.style.setProperty('--text-primary', '#2F4F4F');
       root.style.setProperty('--text-secondary', '#6b7280');
-      root.style.setProperty('--border-color', '#e5e7eb');
-      root.style.setProperty('--primary-color', '#4f46e5');
-      root.style.setProperty('--primary-hover', '#4338ca');
+      root.style.setProperty('--border-color', '#E0F6E0');
+      root.style.setProperty('--primary-color', '#98FB98');
+      root.style.setProperty('--primary-hover', '#2E8B57');
       root.classList.remove('dark');
     }
     

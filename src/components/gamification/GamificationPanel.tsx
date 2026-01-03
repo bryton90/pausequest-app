@@ -50,14 +50,14 @@ const GamificationPanel: React.FC<GamificationPanelProps> = memo(({
         {unlockedAchievements.length > 0 && (
           <div className="mt-4">
             <h4 className="text-sm font-medium mb-2 flex items-center">
-              <Award className="w-4 h-4 mr-1 text-purple-500" />
+              <Award className="w-4 h-4 mr-1 text-green-500" />
               Recent Achievements
             </h4>
             <div className="space-y-2">
               {unlockedAchievements.slice(0, 3).map(achievement => (
                 <div 
                   key={achievement.id}
-                  className="text-sm bg-purple-50 text-purple-700 px-3 py-1.5 rounded-md"
+                  className="text-sm bg-green-50 text-green-700 px-3 py-1.5 rounded-md"
                 >
                   {achievement.name}
                 </div>

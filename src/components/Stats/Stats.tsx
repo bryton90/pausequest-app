@@ -65,8 +65,8 @@ export const Stats: React.FC<StatsProps> = ({ stats, onClose }) => {
                     <YAxis label={{ value: 'minutes', angle: -90, position: 'insideLeft' }} />
                     <Tooltip />
                     <Legend />
-                    <Bar dataKey="focusMin" name="Focus (min)" fill="#4f46e5" radius={[4,4,0,0]} />
-                    <Bar dataKey="breakMin" name="Break (min)" fill="#22c55e" radius={[4,4,0,0]} />
+                    <Bar dataKey="focusMin" name="Focus (min)" fill="#2E8B57" radius={[4,4,0,0]} />
+                    <Bar dataKey="breakMin" name="Break (min)" fill="#98FB98" radius={[4,4,0,0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

@@ -2,7 +2,6 @@ import React, { useState, useCallback, useEffect, useMemo, useRef, memo } from '
 import { useAuth } from '../contexts/AuthContext';
 import { createSession, getSessionHistory as fetchSessionHistory } from '../lib/services/sessionService';
 import { scheduleBreakReminder } from '../lib/services/notificationService';
-import { formatTime } from '../utils/timeUtils';
 import { scheduleSmartReminder } from '../lib/actions/smartReminder.action';
 import { useSettings } from '../contexts/SettingsContext';
 import { useGamification } from '../contexts/GamificationContext';
@@ -16,6 +15,7 @@ import SettingsPanel from '../components/SettingsPanel';
 import GamificationBanner from '../components/GamificationBanner';
 import TimerPageTabs from '../components/TimerPageTabs';
 import { useTimer } from '../hooks/useTimer';
+import Timer from '../components/Timer/Timer';
 
 type TimerVisualization = 'rocket' | 'coffee' | 'digital';
 
@@ -75,7 +75,7 @@ const TimerPage: React.FC = () => {
   } | null>(null);
   const { user } = useAuth();
   const { 
-    timerVisualization, 
+    timerSettings: { visualization: timerVisualization },
     showMoodAvatars,
     setTimerVisualization,
     toggleMoodAvatars,
@@ -217,8 +217,8 @@ const TimerPage: React.FC = () => {
   }, []);
 
   // Memoize the notes change handler
-  const handleNotesChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setNotes(e.target.value);
+  const handleNotesChange = useCallback((notes: string) => {
+    setNotes(notes);
   }, []);
 
   // Memoize the settings toggle
@@ -228,23 +228,21 @@ const TimerPage: React.FC = () => {
 
   // Memoize the handleSaveNotes function
   const handleSaveNotes = useCallback(async () => {
-    if (!user?.id) return;
-    
     try {
-      const response = await fetch('/api/sessions', {
+      const response = await fetch('http://127.0.0.1:5000/api/session-public', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          mood: selectedMood,
-          mood_emoji: moodEmoji,
-          notes,
           focus_duration: workDuration - timeLeftInSeconds,
           break_duration: 0, // This would be updated when the break is taken
+          mood_emoji: moodEmoji,
+          notes,
         }),
       });
 
       if (response.ok) {
-        const newSession = await response.json();
+        const result = await response.json();
+        const newSession = result.session;
         setSessionHistory(prev => [...prev, newSession]);
         
         // Update analysis with new data
@@ -259,11 +257,15 @@ const TimerPage: React.FC = () => {
         
         // Check for achievements
         checkForAchievements('break');
+        
+        // Clear notes after saving
+        setNotes('');
+        setMoodEmoji('');
       }
     } catch (error) {
       console.error('Failed to save session:', error);
     }
-  }, [notes, selectedMood, moodEmoji, sessionHistory, workDuration, timeLeftInSeconds, addXp, checkForAchievements]);
+  }, [notes, moodEmoji, sessionHistory, workDuration, timeLeftInSeconds, addXp, checkForAchievements]);
 
   const progress = (workDuration - timeLeftInSeconds) / workDuration;
   const handleMoodChange = useCallback((mood: string, emoji: string) => {
@@ -305,29 +307,6 @@ const TimerPage: React.FC = () => {
     );
   }, [showMoodAvatars, selectedMood, handleMoodSelect]);
 
-  // Memoize the timer display with optimized progress bar
-  const renderTimer = useMemo(() => {
-    const progress = (timeLeftInSeconds / workDuration) * 100;
-    
-    return (
-      <div className="flex flex-col items-center">
-        <div className="text-6xl font-mono font-bold mb-4" style={{ willChange: 'contents' }}>
-          {formatTime(timeLeftInSeconds * 1000)}
-        </div>
-        <div className="w-full max-w-md bg-gray-200 rounded-full h-4 mb-6 overflow-hidden">
-          <div 
-            className="bg-blue-500 h-4 rounded-full transition-transform duration-300 ease-out origin-left"
-            style={{ 
-              transform: `scaleX(${progress / 100})`,
-              willChange: 'transform',
-              width: '100%' // Full width but scaled down with transform
-            }}
-          />
-        </div>
-      </div>
-    );
-  }, [timeLeftInSeconds, workDuration]);
-
   // Memoize the notes section
   const renderNotesSection = useMemo(() => {
     return (
@@ -341,7 +320,7 @@ const TimerPage: React.FC = () => {
           className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           placeholder="How was your session?"
           value={notes}
-          onChange={handleNotesChange}
+          onChange={(e) => handleNotesChange(e.target.value)}
         />
         <div className="mt-2 flex justify-end">
           <button
@@ -444,7 +423,18 @@ const TimerPage: React.FC = () => {
         
         <div className="p-6">
           <div className="text-center mb-8">
-            {renderTimer}
+            <Timer
+              timeLeft={timeLeftInSeconds}
+              isRunning={isRunning}
+              onStart={handleStart}
+              onStop={handlePause}
+              onReset={handleReset}
+              totalTime={workDuration}
+              animationType="both"
+              notes={notes}
+              onNotesChange={handleNotesChange}
+            />
+            
             <div className="mt-6 space-x-4">
               {!isRunning ? (
                 <button
@@ -468,6 +458,18 @@ const TimerPage: React.FC = () => {
                 Reset
               </button>
             </div>
+            
+            {/* Save Notes Button */}
+            {notes.trim() && !isRunning && (
+              <div className="mt-4">
+                <button
+                  onClick={handleSaveNotes}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                >
+                  Save Session Notes
+                </button>
+              </div>
+            )}
           </div>
           
           {/* Gamification Stats */}
@@ -506,21 +508,21 @@ const TimerPage: React.FC = () => {
             
             {/* Pattern Analysis */}
             {analysis && (
-              <div className="mt-6 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-100 dark:border-purple-800">
+              <div className="mt-6 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-800">
                 <div className="flex justify-between items-center mb-2">
-                  <h3 className="text-md font-medium text-purple-800 dark:text-purple-200">
+                  <h3 className="text-md font-medium text-green-800 dark:text-green-200">
                     Your Pattern Analysis
                   </h3>
                   <button 
                     onClick={() => setShowAnalysis(!showAnalysis)}
-                    className="text-xs text-purple-600 dark:text-purple-400 hover:underline"
+                    className="text-xs text-green-600 dark:text-green-400 hover:underline"
                   >
                     {showAnalysis ? 'Hide' : 'Show'}
                   </button>
                 </div>
                 
                 {showAnalysis && (
-                  <div className="mt-2 text-sm text-purple-700 dark:text-purple-300">
+                  <div className="mt-2 text-sm text-green-700 dark:text-green-300">
                     {analysis.mostCommonMood && (
                       <p className="mb-1">
                         <span className="font-medium">Common Mood:</span>{' '}
@@ -532,7 +534,7 @@ const TimerPage: React.FC = () => {
                       {analysis.averageSentiment > 0.1 ? '😊 Positive' : 
                        analysis.averageSentiment < -0.1 ? '😕 Challenging' : '😐 Neutral'}
                     </p>
-                    <p className="text-purple-800 dark:text-purple-200 font-medium">
+                    <p className="text-green-800 dark:text-green-200 font-medium">
                       {analysis.suggestion}
                     </p>
                   </div>

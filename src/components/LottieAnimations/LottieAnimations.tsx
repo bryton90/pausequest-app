@@ -376,7 +376,7 @@ export const ProgressRingAnimation: React.FC<{
   size?: number;
   strokeWidth?: number;
   color?: string;
-}> = ({ progress, size = 120, strokeWidth = 8, color = '#3B82F6' }) => {
+}> = ({ progress, size = 120, strokeWidth = 8, color = '#2E8B57' }) => {
   const [displayProgress, setDisplayProgress] = useState(0);
 
   useEffect(() => {
