@@ -1,90 +1,166 @@
-import React from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useSettings } from '../contexts/SettingsContext';
+import { getInitialStats } from '../utils/gamification';
+import { Clock, Trophy, Flame, Target, TrendingUp } from 'lucide-react';
 
 function StatsPage() {
-  const { user } = useAuth();
-
-  // Mock data for stats - in a real app, this would come from your backend or state management
-  const stats = {
-    totalFocusTime: user?.stats?.totalFocusTime || 0, // in minutes
-    sessionsCompleted: user?.stats?.sessionsCompleted || 0,
-    currentStreak: user?.stats?.currentStreak || 0, // days
-    weeklyFocus: [20, 35, 45, 25, 50, 40, 30], // minutes per day
-  };
+  const { isDarkMode } = useSettings();
+  
+  // Get real stats from gamification system
+  const stats = getInitialStats();
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold text-center mb-8">Your Statistics</h1>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">Total Focus Time</h3>
-          <p className="text-3xl font-bold text-blue-600">
-            {Math.floor(stats.totalFocusTime / 60)}h {stats.totalFocusTime % 60}m
+    <div className={`min-h-screen bg-gradient-to-br p-6 ${
+      isDarkMode 
+        ? 'from-gray-900 via-gray-800 to-gray-900' 
+        : 'from-green-50 via-white to-green-50'
+    }`}>
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-2">
+            📊 Your Performance Stats
+          </h1>
+          <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
+            Track your productivity journey and celebrate your achievements
           </p>
-          <p className="text-sm text-gray-500 mt-1">of focused work</p>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">Sessions Completed</h3>
-          <p className="text-3xl font-bold text-green-600">{stats.sessionsCompleted}</p>
-          <p className="text-sm text-gray-500 mt-1">focus sessions</p>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">Current Streak</h3>
-          <p className="text-3xl font-bold text-green-600">{stats.currentStreak} days</p>
-          <p className="text-sm text-gray-500 mt-1">in a row</p>
-        </div>
-      </div>
-
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-xl font-semibold mb-4">Weekly Focus</h2>
-        <div className="h-64 flex items-end justify-between">
-          {stats.weeklyFocus.map((value, index) => (
-            <div key={index} className="flex flex-col items-center">
-              <div
-                className="w-8 bg-blue-500 rounded-t-sm"
-                style={{ height: `${value}%` }}
-                title={`${value} min`} />
-              <span className="text-xs mt-2 text-gray-500">
-                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][index]}
+        {/* Main Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className={`bg-bg-secondary/95 backdrop-blur-md rounded-2xl shadow-xl border p-6 ${
+            isDarkMode ? 'border-white/10' : 'border-white/20'
+          }`}>
+            <div className="flex items-center justify-between mb-4">
+              <Clock className="w-8 h-8 text-blue-500" />
+              <span className="text-2xl font-bold text-blue-500">
+                {Math.floor(stats.totalFocusTime / 60)}h {stats.totalFocusTime % 60}m
               </span>
             </div>
-          ))}
-        </div>
-      </div>
+            <h3 className={`font-semibold mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+              Total Focus Time
+            </h3>
+            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              Deep work hours accumulated
+            </p>
+          </div>
 
-      <div className="bg-white p-6 rounded-lg shadow-md mt-6">
-        <h2 className="text-xl font-semibold mb-4">Achievements</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[
-            { name: 'First Timer', description: 'Complete your first focus session', earned: stats.sessionsCompleted > 0 },
-            { name: '5 in a Row', description: 'Complete 5 focus sessions', earned: stats.sessionsCompleted >= 5 },
-            { name: 'Marathon Runner', description: 'Focus for more than 2 hours in one session', earned: stats.totalFocusTime > 120 },
-            { name: 'Early Bird', description: 'Complete a session before 8 AM', earned: false },
-            { name: 'Night Owl', description: 'Complete a session after 10 PM', earned: false },
-            { name: 'Consistency King', description: '7-day streak', earned: stats.currentStreak >= 7 },
-          ].map((achievement, index) => (
-            <div
-              key={index}
-              className={`p-4 rounded-lg border ${achievement.earned
-                  ? 'bg-green-50 border-green-200'
-                  : 'bg-gray-50 border-gray-200 opacity-60'}`}
-            >
-              <div className="flex items-center">
-                <div className={`flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center ${achievement.earned ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-400'}`}>
-                  {achievement.earned ? '✓' : '?'}
-                </div>
-                <div className="ml-3">
-                  <h3 className={`text-sm font-medium ${achievement.earned ? 'text-gray-900' : 'text-gray-500'}`}>
-                    {achievement.name}
-                  </h3>
-                  <p className="text-xs text-gray-500">{achievement.description}</p>
+          <div className={`bg-bg-secondary/95 backdrop-blur-md rounded-2xl shadow-xl border p-6 ${
+            isDarkMode ? 'border-white/10' : 'border-white/20'
+          }`}>
+            <div className="flex items-center justify-between mb-4">
+              <Target className="w-8 h-8 text-green-500" />
+              <span className="text-2xl font-bold text-green-500">{stats.totalSessions}</span>
+            </div>
+            <h3 className={`font-semibold mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+              Sessions Completed
+            </h3>
+            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              Focus sessions finished
+            </p>
+          </div>
+
+          <div className={`bg-bg-secondary/95 backdrop-blur-md rounded-2xl shadow-xl border p-6 ${
+            isDarkMode ? 'border-white/10' : 'border-white/20'
+          }`}>
+            <div className="flex items-center justify-between mb-4">
+              <Flame className="w-8 h-8 text-orange-500" />
+              <span className="text-2xl font-bold text-orange-500">{stats.currentStreak}</span>
+            </div>
+            <h3 className={`font-semibold mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+              Current Streak
+            </h3>
+            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              Days in a row
+            </p>
+          </div>
+
+          <div className={`bg-bg-secondary/95 backdrop-blur-md rounded-2xl shadow-xl border p-6 ${
+            isDarkMode ? 'border-white/10' : 'border-white/20'
+          }`}>
+            <div className="flex items-center justify-between mb-4">
+              <Trophy className="w-8 h-8 text-yellow-500" />
+              <span className="text-2xl font-bold text-yellow-500">{stats.focusPoints}</span>
+            </div>
+            <h3 className={`font-semibold mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+              Focus Points
+            </h3>
+            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              Productivity score
+            </p>
+          </div>
+        </div>
+
+        {/* Weekly Focus Chart */}
+        <div className={`bg-bg-secondary/95 backdrop-blur-md rounded-2xl shadow-xl border p-6 mb-8 ${
+          isDarkMode ? 'border-white/10' : 'border-white/20'
+        }`}>
+          <div className="flex items-center mb-6">
+            <TrendingUp className="w-6 h-6 mr-2 text-green-500" />
+            <h2 className={`text-xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+              Weekly Focus Pattern
+            </h2>
+          </div>
+          <div className="h-64 flex items-end justify-between">
+            {[20, 35, 45, 25, 50, 40, 30].map((value, index) => (
+              <div key={index} className="flex flex-col items-center flex-1">
+                <div
+                  className="w-12 bg-gradient-to-t from-green-500 to-emerald-500 rounded-t-lg transition-all hover:from-green-600 hover:to-emerald-600"
+                  style={{ height: `${(value / 50) * 100}%` }}
+                  title={`${value} min`} 
+                />
+                <span className={`text-xs mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][index]}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Achievements */}
+        <div className={`bg-bg-secondary/95 backdrop-blur-md rounded-2xl shadow-xl border p-6 ${
+          isDarkMode ? 'border-white/10' : 'border-white/20'
+        }`}>
+          <div className="flex items-center mb-6">
+            <Trophy className="w-6 h-6 mr-2 text-yellow-500" />
+            <h2 className={`text-xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+              🏆 Achievements
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[
+              { name: 'First Timer', description: 'Complete your first focus session', earned: stats.totalSessions > 0, icon: '🎯' },
+              { name: '5 in a Row', description: 'Complete 5 focus sessions', earned: stats.totalSessions >= 5, icon: '⚡' },
+              { name: 'Marathon Runner', description: 'Focus for more than 2 hours total', earned: stats.totalFocusTime > 120, icon: '🏃' },
+              { name: 'Early Bird', description: 'Complete a session before 8 AM', earned: false, icon: '🌅' },
+              { name: 'Night Owl', description: 'Complete a session after 10 PM', earned: false, icon: '🦉' },
+              { name: 'Consistency King', description: '7-day streak', earned: stats.currentStreak >= 7, icon: '👑' },
+            ].map((achievement, index) => (
+              <div
+                key={index}
+                className={`p-4 rounded-xl border transition-all ${
+                  achievement.earned
+                    ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 shadow-lg'
+                    : 'bg-gray-50 border-gray-200 opacity-60'
+                }`}
+              >
+                <div className="flex items-center">
+                  <div className={`flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center text-lg ${
+                    achievement.earned ? 'bg-green-100' : 'bg-gray-200'
+                  }`}>
+                    {achievement.earned ? achievement.icon : '🔒'}
+                  </div>
+                  <div className="ml-3">
+                    <h3 className={`text-sm font-medium ${
+                      achievement.earned ? 'text-gray-900' : 'text-gray-500'
+                    }`}>
+                      {achievement.name}
+                    </h3>
+                    <p className="text-xs text-gray-500">{achievement.description}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </div>
