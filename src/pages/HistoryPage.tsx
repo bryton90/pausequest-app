@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { getSessionHistory, Session } from '@/api/breakService';
+import { useSettings } from '../contexts/SettingsContext';
 
 const HistoryPage: React.FC = () => {
+  const { isDarkMode } = useSettings();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -14,7 +16,7 @@ const HistoryPage: React.FC = () => {
         setSessions(response.sessions);
       } catch (err) {
         console.error('Failed to fetch session history:', err);
-        setError('Failed to load session history');
+        setError('Begin your session so you can see your history');
       } finally {
         setLoading(false);
       }
@@ -51,9 +53,9 @@ const HistoryPage: React.FC = () => {
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Session History</h1>
-        <div className="bg-white shadow overflow-hidden sm:rounded-md">
-          <div className="px-4 py-8 text-center text-gray-500">
+        <h1 className={`text-3xl font-bold mb-6 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Session History</h1>
+        <div className={`shadow overflow-hidden sm:rounded-md ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+          <div className={`px-4 py-8 text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
             Loading session history...
           </div>
         </div>
@@ -64,8 +66,8 @@ const HistoryPage: React.FC = () => {
   if (error) {
     return (
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Session History</h1>
-        <div className="bg-white shadow overflow-hidden sm:rounded-md">
+        <h1 className={`text-3xl font-bold mb-6 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Session History</h1>
+        <div className={`shadow overflow-hidden sm:rounded-md ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
           <div className="px-4 py-8 text-center text-red-500">
             {error}
           </div>
@@ -76,9 +78,9 @@ const HistoryPage: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">Session History</h1>
-      <div className="bg-white shadow overflow-hidden sm:rounded-md">
-        <ul className="divide-y divide-gray-200">
+      <h1 className={`text-3xl font-bold mb-6 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Session History</h1>
+      <div className={`shadow overflow-hidden sm:rounded-md ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+        <ul className={`divide-y ${isDarkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
           {sessions.length > 0 ? (
             sessions.map((session) => {
               const transformedSession = transformSession(session);
@@ -86,20 +88,20 @@ const HistoryPage: React.FC = () => {
                 <li key={session.id}>
                   <div className="px-4 py-4 sm:px-6">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-blue-600 truncate">
+                        <p className={`text-sm font-medium truncate ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
                         {transformedSession.type === 'focus' ? 'Focus Session' : 'Break'}
                       </p>
                       <div className="ml-2 flex-shrink-0 flex">
-                        <p className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                        <p className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${isDarkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-800'}`}>
                           {transformedSession.completed ? 'Completed' : 'Incomplete'}
                         </p>
                       </div>
                     </div>
                     <div className="mt-2 sm:flex sm:justify-between">
                       <div className="sm:flex">
-                        <p className="flex items-center text-sm text-gray-500">
+                        <p className={`flex items-center text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                           <svg
-                            className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400"
+                            className={`flex-shrink-0 mr-1.5 h-5 w-5 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}
                             xmlns="http://www.w3.org/2000/svg"
                             viewBox="0 0 20 20"
                             fill="currentColor"
@@ -134,14 +136,14 @@ const HistoryPage: React.FC = () => {
                       </div>
                     </div>
                     {session.mood_emoji && (
-                      <div className="mt-2 flex items-center text-sm text-gray-500">
+                      <div className={`mt-2 flex items-center text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                         <span className="mr-2">Mood:</span>
                         <span className="text-lg">{session.mood_emoji}</span>
                       </div>
                     )}
                     {session.notes && (
-                      <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-800 rounded text-sm text-gray-700 dark:text-gray-300">
-                        <span className="font-medium text-gray-600 dark:text-gray-400">Notes:</span> {session.notes}
+                      <div className={`mt-2 p-2 rounded text-sm ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-50 text-gray-700'}`}>
+                        <span className={`font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Notes:</span> {session.notes}
                       </div>
                     )}
                   </div>
@@ -149,7 +151,7 @@ const HistoryPage: React.FC = () => {
               );
             })
           ) : (
-            <li className="px-4 py-4 text-center text-gray-500">
+            <li className={`px-4 py-4 text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
               No sessions found. Start focusing to see your history here!
             </li>
           )}

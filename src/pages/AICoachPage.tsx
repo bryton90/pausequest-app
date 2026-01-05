@@ -41,6 +41,7 @@ const AICoachPage: React.FC = () => {
   const [conversationHistory, setConversationHistory] = useState<QueryAnalysis[]>([]);
   const [currentMood, setCurrentMood] = useState<string>('');
   const [isMLLoading, setIsMLLoading] = useState(true);
+  const [hasUserInteracted, setHasUserInteracted] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Load real user stats and initialize ML analysis
@@ -48,14 +49,19 @@ const AICoachPage: React.FC = () => {
     const userStats = getInitialStats();
     setStats(userStats);
     
+    // Scroll to top when component mounts
+    window.scrollTo(0, 0);
+    
     // Initialize ML analysis with mock session data
     initializeMLAnalysis();
   }, []);
 
-  // Auto-scroll to bottom when messages change
+  // Auto-scroll to bottom when messages change, but only after user interaction
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, isTyping]);
+    if (hasUserInteracted) {
+      scrollToBottom();
+    }
+  }, [messages, isTyping, hasUserInteracted]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -197,6 +203,9 @@ const AICoachPage: React.FC = () => {
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
 
+    // Mark that user has interacted with the chat
+    setHasUserInteracted(true);
+
     const userMessage: AICoachMessage = {
       id: Date.now().toString(),
       type: 'user',
@@ -321,6 +330,8 @@ const AICoachPage: React.FC = () => {
   const handleQuickAction = (action: string) => {
     switch (action) {
       case 'productivity-report':
+        // Scroll to top before navigating
+        window.scrollTo(0, 0);
         navigate('/stats');
         break;
       case 'optimize-schedule':
