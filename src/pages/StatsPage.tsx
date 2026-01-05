@@ -1,6 +1,6 @@
 import { useSettings } from '../contexts/SettingsContext';
 import { getInitialStats } from '../utils/gamification';
-import { Clock, Trophy, Flame, Target, TrendingUp } from 'lucide-react';
+import { Clock, Trophy, Flame, Target, TrendingUp, BarChart3 } from 'lucide-react';
 
 function StatsPage() {
   const { isDarkMode } = useSettings();
@@ -17,8 +17,17 @@ function StatsPage() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
+          <div className="flex justify-center items-center mb-4">
+            <div className={`p-3 rounded-2xl ${
+              isDarkMode ? 'bg-indigo-900' : 'bg-indigo-100'
+            }`}>
+              <BarChart3 className={`w-8 h-8 ${
+                isDarkMode ? 'text-indigo-300' : 'text-indigo-600'
+              }`} />
+            </div>
+          </div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-2">
-            📊 Your Performance Stats
+            Your Performance Stats
           </h1>
           <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
             Track your productivity journey and celebrate your achievements
