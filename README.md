@@ -31,6 +31,7 @@ Features
 - Export data: CSV/JSON export of session logs (if implemented).
 
 Screenshot
+
 ![PauseQuest screenshot](docs/media/screenshot.png)
 
 Tech Stack
