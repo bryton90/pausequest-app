@@ -16,7 +16,7 @@ PauseQuest is a productivity web-app designed to help you manage your work sessi
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/bryton90/pausequest-app.git
+   git clone https://github.com/bryton90/pausequest.git
    ```
 
 2. Navigate to the project directory:
