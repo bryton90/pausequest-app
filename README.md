@@ -6,7 +6,7 @@ A productivity web app that helps users manage focused work sessions and take me
 
 Demo
 ![Demo placeholder](docs/media/demo-placeholder.svg)
-Live demo: (link to deployed app if available)
+Live demo: [https://pausequest.vercel.app](https://pausequest.vercel.app)
 
 Table of Contents
 - Features
@@ -33,11 +33,11 @@ Features
 - Export data: CSV/JSON export of session logs (if implemented).
 
 Screenshot
-![PauseQuest screenshot placeholder](docs/media/screenshot-placeholder.svg)
+![PauseQuest screenshot](docs/media/screenshot-placeholder.svg)
 
 Tech Stack
 - Frontend: React + TypeScript, Vite
-- Backend / AI: Python (describe service e.g., FastAPI) — document what runs where
+- Backend / AI: Python (FastAPI)
 - Other: FontAwesome for icons
 
 Architecture (brief)
