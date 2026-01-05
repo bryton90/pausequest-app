@@ -5,6 +5,7 @@
 A productivity web app that helps users manage focused work sessions and take meaningful breaks using a Pomodoro-style timer, break prompts, mood tracking, and an AI coach to provide personalized well‑being recommendations.
 
 Demo
+
 Live demo: [https://pausequest.vercel.app](https://pausequest.vercel.app)
 
 Table of Contents
@@ -32,7 +33,7 @@ Features
 - Export data: CSV/JSON export of session logs (if implemented).
 
 Screenshot
-![PauseQuest screenshot](docs/media/screenshot-placeholder.svg)
+![PauseQuest screenshot](docs/media/screenshot.png)
 
 Tech Stack
 - Frontend: React + TypeScript, Vite
