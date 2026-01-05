@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Brain, MessageCircle, Sparkles, TrendingUp, Target, Zap, Trophy, Flame, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSettings } from '../contexts/SettingsContext';
@@ -41,6 +41,7 @@ const AICoachPage: React.FC = () => {
   const [conversationHistory, setConversationHistory] = useState<QueryAnalysis[]>([]);
   const [currentMood, setCurrentMood] = useState<string>('');
   const [isMLLoading, setIsMLLoading] = useState(true);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Load real user stats and initialize ML analysis
   useEffect(() => {
@@ -50,6 +51,15 @@ const AICoachPage: React.FC = () => {
     // Initialize ML analysis with mock session data
     initializeMLAnalysis();
   }, []);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isTyping]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   // Initialize ML analysis
   const initializeMLAnalysis = async () => {
@@ -411,6 +421,7 @@ const AICoachPage: React.FC = () => {
                     </div>
                   </div>
                 )}
+                <div ref={messagesEndRef} />
               </div>
 
               {/* Input Area */}
