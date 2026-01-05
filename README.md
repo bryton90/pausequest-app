@@ -5,7 +5,6 @@
 A productivity web app that helps users manage focused work sessions and take meaningful breaks using a Pomodoro-style timer, break prompts, mood tracking, and an AI coach to provide personalized well‑being recommendations.
 
 Demo
-![Demo placeholder](docs/media/demo-placeholder.svg)
 Live demo: [https://pausequest.vercel.app](https://pausequest.vercel.app)
 
 Table of Contents
