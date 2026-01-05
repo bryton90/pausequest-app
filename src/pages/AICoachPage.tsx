@@ -41,8 +41,8 @@ const AICoachPage: React.FC = () => {
   const [conversationHistory, setConversationHistory] = useState<QueryAnalysis[]>([]);
   const [currentMood, setCurrentMood] = useState<string>('');
   const [isMLLoading, setIsMLLoading] = useState(true);
-  const [hasUserInteracted, setHasUserInteracted] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   // Load real user stats and initialize ML analysis
   useEffect(() => {
@@ -56,15 +56,15 @@ const AICoachPage: React.FC = () => {
     initializeMLAnalysis();
   }, []);
 
-  // Auto-scroll to bottom when messages change, but only after user interaction
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
-    if (hasUserInteracted) {
-      scrollToBottom();
-    }
-  }, [messages, isTyping, hasUserInteracted]);
+    scrollToBottom();
+  }, [messages, isTyping]);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
   };
 
   // Initialize ML analysis
@@ -72,7 +72,7 @@ const AICoachPage: React.FC = () => {
     setIsMLLoading(true);
     
     try {
-      // Create mock session data based on user stats
+      
       const mockSessions = generateMockSessions(stats);
       
       // Analyze user behavior patterns
@@ -202,9 +202,6 @@ const AICoachPage: React.FC = () => {
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
-
-    // Mark that user has interacted with the chat
-    setHasUserInteracted(true);
 
     const userMessage: AICoachMessage = {
       id: Date.now().toString(),
@@ -398,7 +395,7 @@ const AICoachPage: React.FC = () => {
               </div>
 
               {/* Messages */}
-              <div className="h-96 overflow-y-auto p-6 space-y-4">
+              <div ref={chatContainerRef} className="h-96 overflow-y-auto p-6 space-y-4">
                 {messages.map((message) => (
                   <div
                     key={message.id}
