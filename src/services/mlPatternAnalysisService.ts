@@ -21,6 +21,8 @@ export interface TimeSeriesPrediction {
 }
 
 export interface BehavioralPattern {
+  name: any;
+  confidence: number;
   type: 'circadian' | 'weekly' | 'session-based' | 'mood-based';
   strength: number; // 0-1
   description: string;

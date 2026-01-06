@@ -1,12 +1,14 @@
 import { useSettings } from '../contexts/SettingsContext';
+import { useAuth } from '../contexts/AuthContext';
 import { getInitialStats } from '../utils/gamification';
 import { Clock, Trophy, Flame, Target, TrendingUp, BarChart3 } from 'lucide-react';
 
 function StatsPage() {
   const { isDarkMode } = useSettings();
+  const { user } = useAuth();
   
   // Get real stats from gamification system
-  const stats = getInitialStats();
+  const stats = getInitialStats(user?.id);
 
   return (
     <div className={`min-h-screen bg-gradient-to-br p-6 ${

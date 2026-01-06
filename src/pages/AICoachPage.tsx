@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Brain, MessageCircle, Sparkles, TrendingUp, Target, Zap, Trophy, Flame, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSettings } from '../contexts/SettingsContext';
+import { useAuth } from '../contexts/AuthContext';
 import { getInitialStats, UserStats } from '../utils/gamification';
-import { mlPatternAnalysisService, UserBehaviorProfile, MLInsight } from '../services/mlPatternAnalysisService';
+import { mlPatternAnalysisService, UserBehaviorProfile } from '../services/mlPatternAnalysisService';
 import { nlpService, QueryAnalysis, ConversationContext } from '../services/nlpService';
-import { adaptiveLearningService, RecommendationScore } from '../services/adaptiveLearningService';
+import { adaptiveLearningService } from '../services/adaptiveLearningService';
 import { Session } from '../api/breakService';
 
 interface AICoachMessage {
@@ -25,6 +26,7 @@ interface AIInsight {
 
 const AICoachPage: React.FC = () => {
   const { isDarkMode } = useSettings();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState<UserStats | null>(null);
   const [userProfile, setUserProfile] = useState<UserBehaviorProfile | null>(null);
@@ -46,7 +48,7 @@ const AICoachPage: React.FC = () => {
 
   // Load real user stats and initialize ML analysis
   useEffect(() => {
-    const userStats = getInitialStats();
+    const userStats = getInitialStats(user?.id);
     setStats(userStats);
     
     // Scroll to top when component mounts
@@ -197,6 +199,28 @@ const AICoachPage: React.FC = () => {
       });
     }
 
+    // Target achievement insight
+    if (stats.focusPoints >= 50) {
+      insights.push({
+        id: 'target',
+        title: '🎯 Target Achiever',
+        description: `You've hit ${stats.focusPoints} points! You're consistently meeting your daily targets and building strong productivity habits.`,
+        icon: <Target className="w-5 h-5" />,
+        type: 'achievement'
+      });
+    }
+
+    // Trending performance insight
+    if (stats.currentStreak >= 3) {
+      insights.push({
+        id: 'trending',
+        title: '📈 Trending Up',
+        description: `Your performance is trending upward! ${stats.currentStreak}-day streak shows you're building sustainable momentum.`,
+        icon: <TrendingUp className="w-5 h-5" />,
+        type: 'productivity'
+      });
+    }
+
     return insights;
   };
 
@@ -266,6 +290,17 @@ const AICoachPage: React.FC = () => {
         if (relevantInsights.length > 0 && relevantInsights[0]) {
           response += `\n\n**Recent Insights:**\n• ${relevantInsights[0].description}`;
         }
+        
+        // Add adaptive learning recommendations
+        const adaptiveRecs = adaptiveLearningService.scoreRecommendations(
+          userProfile.insights, 
+          queryAnalysis, 
+          userProfile, 
+          'user-1'
+        );
+        if (adaptiveRecs.length > 0) {
+          response += `\n\n**🎯 Targeted Strategies:**\n• ${adaptiveRecs[0]!.explanation.join(', ')}`;
+        }
         break;
 
       case 'wellness':
@@ -280,12 +315,18 @@ const AICoachPage: React.FC = () => {
         break;
 
       case 'focus':
-        response = `🎯 **Focus Optimization**\n\n**Your Focus Style**: As a ${userProfile.archetype.name}, your patterns show: ${userProfile.patterns.filter(p => p.type === 'session-based').length > 0 ? 'Strong session consistency' : 'Room for improvement'}\n\n**ML-Recommended Strategies:**`;
+        response = `🎯 **Focus Optimization**\n\n**Your Focus Style**: As a ${userProfile.archetype.name}, your patterns show: ${userProfile.patterns.filter(p => p.type === 'session-based').length > 0 ? 'Strong session consistency' : 'Room for improvement'}\n `;
         
         // Add focus-specific insights
         const focusInsights = userProfile.insights.filter(i => i.type === 'pattern' && i.title.toLowerCase().includes('focus'));
         if (focusInsights.length > 0 && focusInsights[0]) {
           response += `\n• Focus pattern detected: ${focusInsights[0].title}\n• Recommendation: ${focusInsights[0].description}`;
+        }
+        
+        // Add trending focus patterns
+        const trendingPatterns = userProfile.patterns.filter(p => p.confidence > 0.8);
+        if (trendingPatterns.length > 0 && trendingPatterns[0]) {
+          response += `\n\n**📈 Trending Patterns:**\n• ${trendingPatterns[0].name}: ${trendingPatterns[0].description}`;
         }
         
         response += '\n\n**Quick Focus Tips:**\n• Use the Pomodoro Technique (25min focus, 5min break)\n• Eliminate distractions before starting\n• Set clear intentions for each session';

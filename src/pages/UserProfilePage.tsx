@@ -44,12 +44,12 @@ const UserProfilePage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/');
+    if (!isAuthenticated && !authLoading) {
+      navigate('/', { replace: true });
       return;
     }
 
-    const userStats = getInitialStats();
+    const userStats = getInitialStats(user?.id);
     setStats(userStats);
     setLoadingStats(false);
 
@@ -61,7 +61,7 @@ const UserProfilePage: React.FC = () => {
         bio: 'Passionate about productivity and personal growth.'
       });
     }
-  }, [isAuthenticated, navigate, user]);
+  }, [isAuthenticated, authLoading, navigate, user]);
 
   useEffect(() => {
     const handleSessionComplete = () => {
@@ -80,7 +80,7 @@ const UserProfilePage: React.FC = () => {
         console.log('Updated stats:', updatedStats);
         
         setStats(updatedStats);
-        saveStats(updatedStats);
+        saveStats(updatedStats, user?.id);
         
         // Force a re-render by updating the state
         setTimeout(() => {
@@ -157,7 +157,7 @@ const UserProfilePage: React.FC = () => {
     return { level: 'Expert', color: 'from-yellow-500 to-orange-500', percentage: 100 };
   };
 
-  if (authLoading) {
+  if (authLoading || (!isAuthenticated && !user)) {
     return (
       <div className={`min-h-screen bg-gradient-to-br p-6 flex items-center justify-center ${
         isDarkMode 

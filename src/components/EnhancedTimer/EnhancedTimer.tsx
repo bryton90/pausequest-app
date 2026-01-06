@@ -8,7 +8,6 @@ import {
   AchievementAnimation 
 } from '../LottieAnimations/LottieAnimations';
 import { advancedNotificationService } from '../../lib/services/advancedNotificationService.js';
-import { enhancedAIService } from '../../services/enhancedAIService.js';
 import { getInitialStats, saveStats, updateStatsAfterSession, UserStats } from '../../utils/gamification';
 import { Session } from '../../api/breakService.js';
 
@@ -71,7 +70,7 @@ export const EnhancedTimer: React.FC<EnhancedTimerProps> = ({
 
   // Load user stats
   useEffect(() => {
-    const userStats = getInitialStats();
+    const userStats = getInitialStats(userId);
     setStats(userStats);
   }, [userId]);
 
@@ -119,7 +118,7 @@ export const EnhancedTimer: React.FC<EnhancedTimerProps> = ({
         const sessionDuration = Math.round(totalTime / 60); // Convert seconds to minutes
         const updatedStats = updateStatsAfterSession(stats, sessionDuration);
         setStats(updatedStats);
-        saveStats(updatedStats);
+        saveStats(updatedStats, userId);
         
         // Dispatch custom event for other components
         window.dispatchEvent(new CustomEvent('sessionComplete', {

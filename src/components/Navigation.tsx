@@ -13,7 +13,8 @@ import { useAuth } from "../contexts/AuthContext";
 const Navigation: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  
   const isActive = (path: string) => {
     return location.pathname === path
       ? "bg-primary text-white"
@@ -62,31 +63,41 @@ const Navigation: React.FC = () => {
               {" "}
               <Link
                 to="/settings"
-                className={`p-2 rounded-full ${location.pathname === "/settings" ? "text-primary" : "text-text-secondary hover:text-text-primary"}`}
+                className={`p-2 rounded-full transition-colors duration-200 ${
+                  location.pathname === "/settings" 
+                    ? "text-primary" 
+                    : "text-text-secondary hover:text-text-primary"
+                }`}
                 title="Settings"
               >
                 {" "}
                 <Settings className="h-5 w-5" />{" "}
               </Link>{" "}
-              <Link
-                to="/profile"
-                className={`p-2 rounded-full ${location.pathname === "/profile" ? "text-primary" : "text-text-secondary hover:text-text-primary"}`}
-                title="Profile"
-              >
-                {" "}
-                {user?.photoURL ? (
-                  <img
-                    src={user.photoURL}
-                    alt={user.displayName || "Profile"}
-                    className="h-8 w-8 rounded-full"
-                  />
-                ) : (
-                  <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center">
-                    {" "}
-                    <User className="h-4 w-4" />{" "}
-                  </div>
-                )}{" "}
-              </Link>{" "}
+              {isAuthenticated && (
+                <Link
+                  to="/profile"
+                  className={`p-2 rounded-full transition-all duration-200 transform hover:scale-105 ${
+                    location.pathname === "/profile" 
+                      ? "text-primary ring-2 ring-primary/20" 
+                      : "text-text-secondary hover:text-text-primary"
+                  }`}
+                  title="Profile"
+                >
+                  {" "}
+                  {user?.photoURL ? (
+                    <img
+                      src={user.photoURL}
+                      alt={user.displayName || "Profile"}
+                      className="h-8 w-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center">
+                      {" "}
+                      <User className="h-4 w-4" />{" "}
+                    </div>
+                  )}{" "}
+                </Link>
+              )}{" "}
             </div>{" "}
           </div>{" "}
           <div className="-mr-2 flex md:hidden">
@@ -95,31 +106,41 @@ const Navigation: React.FC = () => {
               {" "}
               <Link
                 to="/settings"
-                className={`p-2 rounded-full ${location.pathname === "/settings" ? "text-primary" : "text-text-secondary"}`}
+                className={`p-2 rounded-full transition-colors duration-200 ${
+                  location.pathname === "/settings" 
+                    ? "text-primary" 
+                    : "text-text-secondary hover:text-text-primary"
+                }`}
                 title="Settings"
               >
                 {" "}
                 <Settings className="h-5 w-5" />{" "}
               </Link>{" "}
-              <Link
-                to="/profile"
-                className={`p-2 rounded-full ${location.pathname === "/profile" ? "text-primary" : "text-text-secondary"}`}
-                title="Profile"
-              >
-                {" "}
-                {user?.photoURL ? (
-                  <img
-                    src={user.photoURL}
-                    alt={user.displayName || "Profile"}
-                    className="h-8 w-8 rounded-full"
-                  />
-                ) : (
-                  <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center">
-                    {" "}
-                    <User className="h-4 w-4" />{" "}
-                  </div>
-                )}{" "}
-              </Link>{" "}
+              {isAuthenticated && (
+                <Link
+                  to="/profile"
+                  className={`p-2 rounded-full transition-all duration-200 transform hover:scale-105 ${
+                    location.pathname === "/profile" 
+                      ? "text-primary ring-2 ring-primary/20" 
+                      : "text-text-secondary hover:text-text-primary"
+                  }`}
+                  title="Profile"
+                >
+                  {" "}
+                  {user?.photoURL ? (
+                    <img
+                      src={user.photoURL}
+                      alt={user.displayName || "Profile"}
+                      className="h-8 w-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center">
+                      {" "}
+                      <User className="h-4 w-4" />{" "}
+                    </div>
+                  )}{" "}
+                </Link>
+              )}{" "}
             </div>{" "}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -183,7 +204,7 @@ const Navigation: React.FC = () => {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`block px-3 py-2 rounded-md text-base font-medium flex items-center ${isActive(item.path)}`}
+                className={`flex items-center px-3 py-2 rounded-md text-base font-medium ${isActive(item.path)}`}
                 onClick={() => setIsMenuOpen(false)}
               >
                 {" "}

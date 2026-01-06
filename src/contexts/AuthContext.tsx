@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { getCurrentUser, setCurrentUser as setAuthUser } from '../lib/services/authService';
 
 export type User = {
   metadata: any;
@@ -35,15 +36,68 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>({
-    id: '1',
-    email: 'user@example.com',
-    displayName: 'Demo User',
-    metadata: {
-      creationTime: new Date('2024-01-01').toISOString()
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  // Initialize user from localStorage on mount
+  useEffect(() => {
+    const storedUser = getCurrentUser();
+    if (storedUser) {
+      // Convert authService User to AuthContext User format
+      const adaptedUser: User = {
+        id: storedUser.id,
+        email: storedUser.email,
+        displayName: storedUser.email.split('@')[0] || 'User',
+        metadata: { creationTime: new Date().toISOString() }
+      };
+      
+      // Only add preferences if workDuration is defined
+      if (storedUser.preferences?.workDuration) {
+        adaptedUser.preferences = {
+          workDuration: storedUser.preferences.workDuration,
+          theme: 'system',
+          notifications: {
+            email: false,
+            push: false,
+            breakReminders: true
+          }
+        };
+      }
+      setUser(adaptedUser);
+    } else {
+      // For development: Create a mock user automatically
+      const mockUser: User = {
+        id: 'dev-user-1',
+        email: 'dev@pausequest.app',
+        displayName: 'Developer User',
+        metadata: {
+          creationTime: new Date().toISOString()
+        },
+        preferences: {
+          workDuration: 25 * 60, // 25 minutes in seconds
+          theme: 'system',
+          notifications: {
+            email: false,
+            push: false,
+            breakReminders: true
+          }
+        }
+      };
+      
+      setUser(mockUser);
+      
+      // Save to localStorage in authService format
+      const authServiceUser: any = {
+        id: mockUser.id,
+        email: mockUser.email,
+        preferences: {
+          workDuration: mockUser.preferences?.workDuration
+        }
+      };
+      setAuthUser(authServiceUser);
     }
-  });
-  const [loading, setLoading] = useState<boolean>(false);
+    setLoading(false);
+  }, []);
 
   const login = async (email: string, _password: string) => {
     setLoading(true);
@@ -53,15 +107,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // const response = await authApi.login(email, password);
       // setUser(response.data.user);
       
-      // Mock implementation
-      setUser({ 
+      // Mock implementation - create user and save to localStorage
+      const mockUser: User = { 
         id: '1', 
         email,
         displayName: email.split('@')[0] || 'User',
         metadata: {
           creationTime: new Date().toISOString()
         }
-      });
+      };
+      
+      setUser(mockUser);
+      // Save to localStorage in authService format
+      const authServiceUser: any = {
+        id: mockUser.id,
+        email: mockUser.email
+      };
+      if (mockUser.preferences?.workDuration) {
+        authServiceUser.preferences = {
+          workDuration: mockUser.preferences.workDuration
+        };
+      }
+      setAuthUser(authServiceUser);
     } catch (error) {
       console.error('Login failed:', error);
       throw error;
@@ -89,9 +156,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const logout = () => {
-    // TODO: Implement your logout logic here
     setUser(null);
-    // Clear any user data from localStorage/sessionStorage if needed
+    setAuthUser(null);
+    // Clear any user data from localStorage/sessionStorage
   };
 
   return (
